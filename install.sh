@@ -1,12 +1,12 @@
 #!/bin/bash
 # 西浦课程助手 · 一行安装（macOS / Linux）
-#   /bin/bash -c "$(curl -fsSL https://shanyuzhang.github.io/xjtlu-core-mcp/install.sh)"
+#   /bin/bash -c "$(curl -fsSL https://shanyuzhang.com/xjtlu-core-mcp/install.sh)"
 # 没有 Node.js 20+ 时，下载官方 Node.js 到 ~/.xjtlu-session-mcp/node（不需要管理员权限，不改系统设置），
 # 然后下载工具包、安装依赖、打开学校登录窗口并连接 AI 应用。
 set -euo pipefail
 
 NODE_VERSION="v24.21.0"
-SITE="${XJTLU_INSTALL_BASE:-https://shanyuzhang.github.io/xjtlu-core-mcp}"
+SITE="${XJTLU_INSTALL_BASE:-https://shanyuzhang.com/xjtlu-core-mcp}"
 REPO_ZIP="https://github.com/shanyuzhang/xjtlu-core-mcp/archive/refs/heads/main.zip"
 NODE_MIRRORS=("https://nodejs.org/dist" "https://cdn.npmmirror.com/binaries/node")
 APP_HOME="${XJTLU_MCP_HOME:-$HOME/.xjtlu-session-mcp}"

@@ -378,7 +378,7 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
         <details><summary>它能做什么，不能做什么？</summary><p>能查课程、作业和测验的时间与要求，能读讲义 PDF、Word，能把整门课的资料存到电脑。扫描版 PDF（图片）读不出文字；单个文件最大 60 MB；外部网站上的资料不会下载。</p></details>
         <details><summary>可以把这个网页发给同学吗？</summary><p>可以。网页里没有任何人的账号信息，同学用自己的学校账号登录。但不要把你电脑上的 <code>.xjtlu-session-mcp</code> 文件夹发给别人，那里有你的登录状态。</p></details>
         <details><summary>怎么卸载？</summary><p>删除用户目录下的 <code>.xjtlu-session-mcp</code> 文件夹即可；AI 应用的设置里会多一个叫 <code>xjtlu-core</code> 的连接，也可以一并删掉。下载的课件在「文稿 / XJTLU Core」，想留就留着。</p></details>
-        <details><summary>给懂技术的同学</summary><p>这是一个本地 stdio MCP 服务器，共 9 个只读工具（课程、作业/测验、活动、文件列表、读文件、批量保存、导出目录等），源码在 <a href="https://github.com/shanyuzhang/xjtlu-core-mcp" target="_blank" rel="noreferrer">GitHub</a>。安装命令会把 Node.js（官方二进制包，校验 SHA-256）和程序装进 <code>~/.xjtlu-session-mcp</code>，再修改你同意的 AI 客户端配置，并保留备份。登录窗口是不受自动化控制的普通 Chrome / Edge。目前在 macOS 上实测通过；Windows 脚本按同样流程编写，尚未真机测试。</p><p>工具包 SHA-256<br><span class="hash">b47663ba5ab45c48859a9b6d0ff425de210e8dc2d0e50eaa868126c1af421c9d</span><br>构建于 2026-10-16 · 28 个文件</p></details>
+        <details><summary>给懂技术的同学</summary><p>这是一个本地 stdio MCP 服务器，共 9 个只读工具（课程、作业/测验、活动、文件列表、读文件、批量保存、导出目录等），源码在 <a href="https://github.com/shanyuzhang/xjtlu-core-mcp" target="_blank" rel="noreferrer">GitHub</a>。安装命令会把 Node.js（官方二进制包，校验 SHA-256）和程序装进 <code>~/.xjtlu-session-mcp</code>，再修改你同意的 AI 客户端配置，并保留备份。登录窗口是不受自动化控制的普通 Chrome / Edge。目前在 macOS 上实测通过；Windows 脚本按同样流程编写，尚未真机测试。</p><p>工具包 SHA-256<br><span class="hash">8446d84c320e69a198d2cff597f7b6b0bc62c256cbc6d1a7ce73e9853d55dff4</span><br>构建于 2026-10-16 · 28 个文件</p></details>
       </div>
     </div>
   </section>
@@ -400,7 +400,7 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
 (() => {
-  const SITE = 'https://shanyuzhang.github.io/xjtlu-core-mcp';
+  const SITE = 'https://shanyuzhang.com/xjtlu-core-mcp';
   const COMMANDS = {
     mac: `/bin/bash -c "$(curl -fsSL ${SITE}/install.sh)"`,
     windows: `irm ${SITE}/install.ps1 | iex`,
