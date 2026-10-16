@@ -190,6 +190,12 @@ footer{border-top:1px solid var(--line);background:var(--s0);padding:40px 0 48px
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 
 /* v2 additions */
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.seg-mode{display:flex;width:100%;margin-bottom:14px}
+.seg-mode button{flex:1;padding:8px 10px;font-size:13.5px}
+.os-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;font-size:13px;color:var(--muted)}
+.prompt-box{white-space:pre-wrap;font-family:var(--sans);font-size:13px;line-height:1.7}
+.prompt-box::before{content:none}
 .howto{font-size:13px;color:var(--muted);margin:0 0 8px}
 kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line-2);border-bottom-width:2px;border-radius:6px;padding:2px 6px;color:var(--ink-2)}
 .thinking{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--faint)}
@@ -242,32 +248,64 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
       </div>
 
       <div class="card install" id="install" aria-labelledby="install-title">
-        <div class="install-head">
-          <h2 id="install-title">复制一行，自动装好</h2>
+        <h2 id="install-title" class="sr-only">安装</h2>
+        <div class="seg seg-mode" role="tablist" aria-label="安装方式">
+          <button role="tab" type="button" data-mode="ai" aria-selected="true">让 AI 帮我装 · 最快</button>
+          <button role="tab" type="button" data-mode="self" aria-selected="false">自己装</button>
+        </div>
+        <div class="os-row">
+          <span>你的电脑</span>
           <div class="seg" role="tablist" aria-label="选择电脑系统">
             <button role="tab" type="button" data-os="mac" aria-selected="true">Mac</button>
             <button role="tab" type="button" data-os="windows" aria-selected="false">Windows</button>
           </div>
         </div>
-        <div class="step-row">
-          <span class="dot">1</span>
-          <div>
-            <strong data-os-text="mac:打开「终端」|windows:打开 PowerShell"></strong>
-            <p data-os-html="mac:按 <kbd>⌘</kbd> + <kbd>空格</kbd>，输入「终端」，按回车。|windows:按 <kbd>Win</kbd> 键，输入「PowerShell」，按回车。"></p>
+
+        <div data-panel="ai">
+          <div class="step-row">
+            <span class="dot">1</span>
+            <div>
+              <strong>打开能帮你操作电脑的 AI</strong>
+              <p>比如 Codex、Claude 桌面版的 Code 模式、Cursor。普通网页聊天做不了这件事。</p>
+            </div>
+          </div>
+          <div class="step-row">
+            <span class="dot">2</span>
+            <div>
+              <strong>把这段话复制发给它</strong>
+              <div class="cmd prompt-box" id="ask"><span id="ask-text"></span><button class="copy" type="button" data-copy-target="ask-text" aria-label="复制这段话"><svg class="ico"><use href="#i-copy"/></svg></button></div>
+            </div>
+          </div>
+          <div class="step-row">
+            <span class="dot">3</span>
+            <div>
+              <strong>它要权限就点允许，弹出窗口就登录</strong>
+              <p>在弹出的窗口点「XJTLU Account」，输入账号密码。装好后按 AI 的提示重启一下应用。</p>
+            </div>
           </div>
         </div>
-        <div class="step-row">
-          <span class="dot">2</span>
-          <div>
-            <strong>粘贴下面这一行，按回车</strong>
-            <div class="cmd" id="cmd"><span id="cmd-text"></span><button class="copy" type="button" data-copy-target="cmd-text" aria-label="复制命令"><svg class="ico"><use href="#i-copy"/></svg></button></div>
+
+        <div data-panel="self" hidden>
+          <div class="step-row">
+            <span class="dot">1</span>
+            <div>
+              <strong data-os-text="mac:打开「终端」|windows:打开 PowerShell"></strong>
+              <p data-os-html="mac:按 <kbd>⌘</kbd> + <kbd>空格</kbd>，输入「终端」，按回车。|windows:按 <kbd>Win</kbd> 键，输入「PowerShell」，按回车。"></p>
+            </div>
           </div>
-        </div>
-        <div class="step-row">
-          <span class="dot">3</span>
-          <div>
-            <strong>在弹出的窗口登录学校账号</strong>
-            <p>点「XJTLU Account」，输入账号密码。登录完窗口会自己关闭；最后问你要连接哪个 AI 应用，直接按回车就是「要」。</p>
+          <div class="step-row">
+            <span class="dot">2</span>
+            <div>
+              <strong>粘贴下面这一行，按回车</strong>
+              <div class="cmd" id="cmd"><span id="cmd-text"></span><button class="copy" type="button" data-copy-target="cmd-text" aria-label="复制命令"><svg class="ico"><use href="#i-copy"/></svg></button></div>
+            </div>
+          </div>
+          <div class="step-row">
+            <span class="dot">3</span>
+            <div>
+              <strong>在弹出的窗口登录学校账号</strong>
+              <p>点「XJTLU Account」，输入账号密码。登录完窗口会自己关闭；最后问你要连接哪个 AI 应用，直接按回车就是「要」。</p>
+            </div>
           </div>
         </div>
         <p class="fine">电脑上没有 Node.js 也没关系，会自动装好。大约需要 2–5 分钟。</p>
@@ -370,7 +408,9 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
         <h2>遇到问题？</h2>
       </div>
       <div class="faq">
-        <details><summary>登录过期了，或者 AI 说“需要重新登录”</summary><p>再运行一次同一行安装命令就行，会重新弹出登录窗口。Node.js 已经装好的话不会重复下载。</p></details>
+        <details><summary>在国内能打开这个网址吗？</summary><p>网址通过 Cloudflare 和 GitHub Pages 提供，大多数网络能直接打开。安装时用到的 Node.js 和依赖都会在官方源太慢时自动换成国内镜像。如果网页或安装命令打不开，换个网络（校园网、手机热点）再试。</p></details>
+        <details><summary>为什么不是 npm / npx 命令？</summary><p>npx 命令要求电脑上已经装好 Node.js，而且要从 GitHub 和 npm 官方源下载，国内经常很慢。这一行命令在没有 Node.js 的电脑上也能用：它会自己装好 Node.js，遇到慢的下载源自动换国内镜像。已经装了 Node.js 的同学，它会直接用现有的。</p></details>
+        <details><summary>登录过期了，或者 AI 说“需要重新登录”</summary><p>再运行一次同一行安装命令（或者把上面那段话再发给 AI 一次）就行，会重新弹出登录窗口。Node.js 已经装好的话不会重复下载。</p></details>
         <details><summary>装好了，但 AI 里找不到我的课程</summary><p>先把 AI 应用<b>完全退出</b>（Mac 上按 <kbd>⌘</kbd> + <kbd>Q</kbd>），再重新打开。还不行的话，再运行一次安装命令，最后问你要不要连接 AI 应用时按回车。</p></details>
         <details><summary>提示“没有找到 Claude 桌面版、Codex、Cursor 或 Windsurf”</summary><p>先安装其中一个（推荐 <a href="https://claude.ai/download" target="_blank" rel="noreferrer">Claude 桌面版</a>），打开一次，再运行一次安装命令。</p></details>
         <details><summary>登录窗口一直白屏</summary><p>关掉这个窗口，确认网络正常后再运行一次安装命令。工具用的是一个独立的浏览器窗口，和你平时用的 Chrome 互不影响。</p></details>
@@ -378,7 +418,7 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
         <details><summary>它能做什么，不能做什么？</summary><p>能查课程、作业和测验的时间与要求，能读讲义 PDF、Word，能把整门课的资料存到电脑。扫描版 PDF（图片）读不出文字；单个文件最大 60 MB；外部网站上的资料不会下载。</p></details>
         <details><summary>可以把这个网页发给同学吗？</summary><p>可以。网页里没有任何人的账号信息，同学用自己的学校账号登录。但不要把你电脑上的 <code>.xjtlu-session-mcp</code> 文件夹发给别人，那里有你的登录状态。</p></details>
         <details><summary>怎么卸载？</summary><p>删除用户目录下的 <code>.xjtlu-session-mcp</code> 文件夹即可；AI 应用的设置里会多一个叫 <code>xjtlu-core</code> 的连接，也可以一并删掉。下载的课件在「文稿 / XJTLU Core」，想留就留着。</p></details>
-        <details><summary>给懂技术的同学</summary><p>这是一个本地 stdio MCP 服务器，共 9 个只读工具（课程、作业/测验、活动、文件列表、读文件、批量保存、导出目录等），源码在 <a href="https://github.com/shanyuzhang/xjtlu-core-mcp" target="_blank" rel="noreferrer">GitHub</a>。安装命令会把 Node.js（官方二进制包，校验 SHA-256）和程序装进 <code>~/.xjtlu-session-mcp</code>，再修改你同意的 AI 客户端配置，并保留备份。登录窗口是不受自动化控制的普通 Chrome / Edge。目前在 macOS 上实测通过；Windows 脚本按同样流程编写，尚未真机测试。</p><p>工具包 SHA-256<br><span class="hash">8446d84c320e69a198d2cff597f7b6b0bc62c256cbc6d1a7ce73e9853d55dff4</span><br>构建于 2026-10-16 · 28 个文件</p></details>
+        <details><summary>给懂技术的同学</summary><p>这是一个本地 stdio MCP 服务器，共 9 个只读工具（课程、作业/测验、活动、文件列表、读文件、批量保存、导出目录等），源码在 <a href="https://github.com/shanyuzhang/xjtlu-core-mcp" target="_blank" rel="noreferrer">GitHub</a>。安装命令会把 Node.js（官方二进制包，校验 SHA-256）和程序装进 <code>~/.xjtlu-session-mcp</code>，再修改你同意的 AI 客户端配置，并保留备份。登录窗口是不受自动化控制的普通 Chrome / Edge。目前在 macOS 上实测通过；Windows 脚本按同样流程编写，尚未真机测试。</p><p>工具包 SHA-256<br><span class="hash">8af6e2a2c6b5c7d776b7165b7bb9a593f8899f5ea1b2b6954c649022bf357d6e</span><br>构建于 2026-10-16 · 28 个文件</p></details>
       </div>
     </div>
   </section>
@@ -405,6 +445,19 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
     mac: `/bin/bash -c "$(curl -fsSL ${SITE}/install.sh)"`,
     windows: `irm ${SITE}/install.ps1 | iex`,
   };
+  const AGENT_COMMANDS = {
+    mac: `XJTLU_SETUP_ARGS="--yes --clients all" /bin/bash -c "$(curl -fsSL ${SITE}/install.sh)"`,
+    windows: `$env:XJTLU_SETUP_ARGS='--yes --clients all'; irm ${SITE}/install.ps1 | iex`,
+  };
+  const askText = (os) => `请帮我安装「西浦课程助手」，让你以后能读取我的西浦 Learning Mall 课程（查 DDL、读课件、下载课件）。
+
+请在${os === 'windows' ? ' PowerShell ' : '终端'}里运行下面这条命令。它需要联网，并会写入我的用户目录（.xjtlu-session-mcp 文件夹）；如果需要权限，直接向我申请：
+
+${AGENT_COMMANDS[os]}
+
+运行过程中会弹出一个浏览器窗口，让我自己登录学校账号。这一步要等我登录完，可能需要几分钟，所以请把这条命令的超时时间设为至少 10 分钟，不要提前结束。不要让我在聊天里提供密码。
+
+完成后，用一两句话告诉我结果，并提醒我需要重启哪个 AI 应用。安装说明：${SITE}/`;
   const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
   const toastEl = document.getElementById('toast'); let toastTimer;
   const toast = (text) => { toastEl.textContent = text; toastEl.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200); };
@@ -425,8 +478,14 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
     document.querySelectorAll('[data-os-text]').forEach((el) => { el.textContent = pick(el.dataset.osText, os); });
     document.querySelectorAll('[data-os-html]').forEach((el) => { el.innerHTML = pick(el.dataset.osHtml, os); });
     cmdText.textContent = COMMANDS[os]; cmd.classList.toggle('win', os === 'windows');
+    document.getElementById('ask-text').textContent = askText(os);
   };
   document.querySelectorAll('[data-os]').forEach((b) => b.addEventListener('click', () => selectOs(b.dataset.os)));
+  const selectMode = (mode) => {
+    document.querySelectorAll('[data-mode]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.mode === mode)));
+    document.querySelectorAll('[data-panel]').forEach((el) => { el.hidden = el.dataset.panel !== mode; });
+  };
+  document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => selectMode(b.dataset.mode)));
   selectOs(/Win/i.test(navigator.userAgentData?.platform || navigator.platform || navigator.userAgent) ? 'windows' : 'mac');
 
   const copy = async (text) => {
@@ -441,7 +500,7 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
   document.querySelectorAll('[data-copy-target]').forEach((b) => b.addEventListener('click', async () => {
     if (!await copy(document.getElementById(b.dataset.copyTarget).textContent)) return;
     const use = b.querySelector('use'); b.classList.add('done'); use.setAttribute('href', '#i-check');
-    toast('已复制。粘贴到终端，按回车。');
+    toast(b.dataset.copyTarget === 'ask-text' ? '已复制。发给你的 AI 就行。' : '已复制。粘贴到终端，按回车。');
     setTimeout(() => { b.classList.remove('done'); use.setAttribute('href', '#i-copy'); }, 1800);
   }));
   document.querySelectorAll('[data-prompt]').forEach((b) => b.addEventListener('click', async () => {

@@ -79,11 +79,15 @@ if [ -z "${npm_config_registry:-}" ] && ! curl -fsS -o /dev/null --connect-timeo
   export npm_config_registry="https://registry.npmmirror.com"
 fi
 
+export npm_config_update_notifier=false npm_config_fund=false npm_config_audit=false
 say "③ 正在安装依赖，然后会打开学校登录窗口…"
 say ""
+# XJTLU_SETUP_ARGS 给 AI 代装用，例如 "--yes --clients all"（没有交互终端时不提问）。
+# shellcheck disable=SC2206
+EXTRA=(${XJTLU_SETUP_ARGS:-})
 # 兼容 curl … | bash：此时标准输入是管道，问答改从终端读取。
 if [ -t 0 ] || ! { : < /dev/tty; } 2>/dev/null; then
-  "$NODE" "$INSTALLER" --quick "$@"
+  "$NODE" "$INSTALLER" --quick ${EXTRA[@]+"${EXTRA[@]}"} "$@"
 else
-  "$NODE" "$INSTALLER" --quick "$@" < /dev/tty
+  "$NODE" "$INSTALLER" --quick ${EXTRA[@]+"${EXTRA[@]}"} "$@" < /dev/tty
 fi
