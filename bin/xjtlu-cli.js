@@ -36,11 +36,12 @@ try {
       await new MoodleClient().session.login({ onProgress: log });
       log('✓ 学校账号已连接。');
     }
-    const only = values.clients?.split(',');
+    // --clients all：连接检测到的全部 AI 应用（给 AI 代装使用，用户的请求本身就是同意）。
+    const only = values.clients === 'all' ? null : values.clients?.split(',');
     const found = targets().filter((t) => !only || only.includes(t.id));
     const connected = [];
     for (const target of found) {
-      if (values.yes && !only) throw new Error('--yes 必须配合 --clients，避免修改未选择的客户端。');
+      if (values.yes && !only && values.clients !== 'all') throw new Error('--yes 必须配合 --clients（或 --clients all），避免修改未选择的客户端。');
       const question = values.quick ? `连接到 ${target.name}？(Y/n)` : `接入 ${target.name}？将修改 ${target.file} 并创建备份 (y/N)`;
       if (!values.yes && !/^(y|yes|是)$/i.test(await ask(question, values.quick ? 'y' : 'n'))) continue;
       const result = installTarget(target, launch);

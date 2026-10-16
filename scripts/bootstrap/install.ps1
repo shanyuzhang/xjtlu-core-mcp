@@ -81,9 +81,12 @@
       catch { $env:npm_config_registry = 'https://registry.npmmirror.com' }
     }
 
+    $env:npm_config_update_notifier = 'false'; $env:npm_config_fund = 'false'; $env:npm_config_audit = 'false'
     Write-Host '③ 正在安装依赖，然后会打开学校登录窗口…'
     Write-Host ''
-    & $Node $Installer.FullName --quick
+    # XJTLU_SETUP_ARGS 给 AI 代装用，例如 '--yes --clients all'（没有交互终端时不提问）。
+    $Extra = if ($env:XJTLU_SETUP_ARGS) { @($env:XJTLU_SETUP_ARGS -split '\s+' | Where-Object { $_ }) } else { @() }
+    & $Node $Installer.FullName --quick @Extra
   } catch {
     Write-Host ''
     Write-Host ('✗ ' + $_.Exception.Message) -ForegroundColor Red
