@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
@@ -256,4 +257,13 @@ test('real stdio MCP advertises tools and reports missing login without starting
     assert.equal(tools.find((t) => t.name === 'moodle_save_course_files').annotations.readOnlyHint, false);
     const result = await mcp.callTool({ name: 'moodle_whoami', arguments: {} }); assert.equal(result.isError, true); assert.match(result.content[0].text, /登录/);
   } finally { await mcp.close(); }
+});
+
+test('one-line installer scripts are well-formed and keep the npm/Node fallbacks', () => {
+  const sh = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'scripts', 'bootstrap', 'install.sh');
+  if (process.platform !== 'win32') assert.equal(spawnSync('bash', ['-n', sh]).status, 0);
+  const text = fs.readFileSync(sh, 'utf8');
+  assert.match(text, /--quick/); assert.match(text, /SHASUMS256/); assert.match(text, /registry\.npmmirror\.com/);
+  const ps1 = fs.readFileSync(sh.replace(/install\.sh$/, 'install.ps1'), 'utf8');
+  assert.match(ps1, /--quick/); assert.match(ps1, /Get-FileHash/); assert.doesNotMatch(ps1, /^[^#\n]*\bexit\b/m);
 });

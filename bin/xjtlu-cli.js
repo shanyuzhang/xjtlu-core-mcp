@@ -9,7 +9,7 @@ import { launchConfig, stableInstall, targets, installTarget } from '../src/mood
 
 const { values, positionals } = parseArgs({ allowPositionals: true, options: {
   url: { type: 'string' }, downloads: { type: 'string' }, port: { type: 'string', default: '3891' },
-  yes: { type: 'boolean' }, 'no-login': { type: 'boolean' }, 'no-install': { type: 'boolean' }, clients: { type: 'string' },
+  yes: { type: 'boolean' }, 'no-login': { type: 'boolean' }, 'no-install': { type: 'boolean' }, clients: { type: 'string' }, quick: { type: 'boolean' },
   help: { type: 'boolean', short: 'h' },
 } });
 const command = values.help ? 'help' : positionals[0] || 'serve';
@@ -25,8 +25,9 @@ try {
   if (command === 'help') log(`西浦 Learning Mall MCP\n\n  setup         连接学校账号并配置 AI 客户端\n  login         在独立 Chrome / Edge 窗口登录\n  status        检查登录状态\n  serve         启动 MCP（默认，供 AI 客户端调用）\n  web           启动本地管理页面 http://127.0.0.1:3891\n  config        输出手动 MCP 配置\n\n可选 --url https://core-archive25-26.xjtlu.edu.cn --downloads <目录> --port 3891\n数据目录：${DATA_DIR}`);
   else if (command === 'setup') {
     if (!process.stdin.isTTY && !values.yes) throw new Error('非交互安装需要 --yes 和明确的 --clients；日常使用请在终端运行 setup。');
-    const base = normalizeOrigin(values.url || await ask('学校地址（AY25/26 归档站）', settings().base));
-    const downloads = path.resolve(values.downloads || await ask('课件保存目录', settings().downloads));
+    // --quick（一行安装命令使用）：沿用已保存或默认的学校地址和课件目录，不再提问。
+    const base = normalizeOrigin(values.url || (values.quick ? settings().base : await ask('学校地址（AY25/26 归档站）', settings().base)));
+    const downloads = path.resolve(values.downloads || (values.quick ? settings().downloads : await ask('课件保存目录', settings().downloads)));
     configure({ base, downloads });
     fs.mkdirSync(downloads, { recursive: true });
     const launch = values['no-install'] ? launchConfig() : stableInstall(log);
@@ -36,14 +37,23 @@ try {
       log('✓ 学校账号已连接。');
     }
     const only = values.clients?.split(',');
-    for (const target of targets().filter((t) => !only || only.includes(t.id))) {
+    const found = targets().filter((t) => !only || only.includes(t.id));
+    const connected = [];
+    for (const target of found) {
       if (values.yes && !only) throw new Error('--yes 必须配合 --clients，避免修改未选择的客户端。');
-      if (!values.yes && !/^(y|yes|是)$/i.test(await ask(`接入 ${target.name}？将修改 ${target.file} 并创建备份 (y/N)`, 'n'))) continue;
+      const question = values.quick ? `连接到 ${target.name}？(Y/n)` : `接入 ${target.name}？将修改 ${target.file} 并创建备份 (y/N)`;
+      if (!values.yes && !/^(y|yes|是)$/i.test(await ask(question, values.quick ? 'y' : 'n'))) continue;
       const result = installTarget(target, launch);
+      connected.push(target.name);
       log(`✓ ${target.name}: ${result.file}${result.backup ? `\n  备份：${result.backup}` : ''}`);
     }
-    log('安装完成。请重启已接入的 AI 客户端，询问「列出我的西浦课程」。');
-    log(`手动配置：\n${JSON.stringify({ mcpServers: { 'xjtlu-core': launch } }, null, 2)}`);
+    if (values.quick) {
+      if (connected.length) log(`\n✓ 全部完成。请完全退出并重新打开 ${connected.join('、')}，然后问一句：「我最近有哪些 DDL？」`);
+      else log(`\n${values['no-login'] ? '安装完成' : '学校账号已连接'}，但${found.length ? '你没有选择要连接的 AI 应用' : '电脑上没有找到 Claude 桌面版、Codex、Cursor 或 Windsurf'}。\n先安装其中一个（推荐 Claude 桌面版：https://claude.ai/download），再重新运行同一行安装命令即可。`);
+    } else {
+      log('安装完成。请重启已接入的 AI 客户端，询问「列出我的西浦课程」。');
+      log(`手动配置：\n${JSON.stringify({ mcpServers: { 'xjtlu-core': launch } }, null, 2)}`);
+    }
   } else {
     if (values.url || values.downloads) configure({ ...(values.url ? { base: normalizeOrigin(values.url) } : {}), ...(values.downloads ? { downloads: path.resolve(values.downloads) } : {}) });
     if (command === 'serve') await (await import('../src/moodle/server.js')).startMoodleServer();

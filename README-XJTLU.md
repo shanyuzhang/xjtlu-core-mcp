@@ -4,11 +4,19 @@
 
 ## 发给其他学生
 
-维护者执行 `npm run package:xjtlu`，把生成的 `dist/xjtlu-core-guide.html` 发给同学即可。HTML 内含工具包 ZIP，打开后点击下载，解压到本地文件夹，再运行对应系统的启动脚本。不要发送自己的数据目录、浏览器配置或课件。
+把学生指南链接 <https://shanyuzhang.github.io/xjtlu-core-mcp/> 发给同学。学生只需打开终端粘贴一行：
 
-Windows 双击 `START-WINDOWS.cmd`；macOS 尝试双击 `START-MAC.command`。如果 macOS 不允许启动脚本，使用终端进入解压目录，执行 `bash START-MAC.command`。不需要关闭系统安全保护。如果下载器改变了可执行权限，此命令同样适用。
+```bash
+/bin/bash -c "$(curl -fsSL https://shanyuzhang.github.io/xjtlu-core-mcp/install.sh)"
+```
 
-前置条件：Node.js 20+、Chrome 或 Edge，以及支持本地 stdio MCP 的 AI 客户端（Codex、Claude Desktop、Cursor、Windsurf）。需要可访问学校站点和 npm 下载依赖的网络；是否需要校园 VPN 取决于学校网络配置。本工具不安装浏览器或 Node。
+Windows 在 PowerShell 中运行 `irm https://shanyuzhang.github.io/xjtlu-core-mcp/install.ps1 | iex`。
+
+一行安装脚本（源码在 `scripts/bootstrap/`）会：没有 Node.js 20+ 时下载官方 Node.js v24.21.0 到 `~/.xjtlu-session-mcp/node`（先试 nodejs.org，慢或失败时换 npmmirror，均按 SHA256SUMS 校验，不需要管理员权限）；检查 Chrome / Edge；从 GitHub Pages 下载工具包（失败时改用 GitHub 仓库 ZIP）；npm 官方源连不上时改用 npmmirror；然后运行 `setup --quick`（沿用默认学校地址和课件目录，只询问是否连接检测到的 AI 应用，回车即同意）。重新运行同一行命令即可重新登录或更新。
+
+维护者发布：`npm run package:xjtlu` 生成 `dist/site/`（指南 `index.html`、`install.sh`、ASCII 包装后的 `install.ps1`、工具包 ZIP），推送到 `gh-pages` 分支。`dist/xjtlu-core-guide.html` 是同一份指南，可直接作为文件发送。也可以手动下载 ZIP 后双击 `START-MAC.command` / `START-WINDOWS.cmd`（此方式需要已安装 Node.js 20+）。
+
+前置条件：Chrome 或 Edge，以及支持本地 stdio MCP 的 AI 客户端（Codex、Claude Desktop、Cursor、Windsurf）。需要可访问学校站点、GitHub Pages 和 npm 源的网络。
 
 安装器会把程序放到 `~/.xjtlu-session-mcp/app`（Windows 对应用户主目录），安装 npm 依赖，并引导学生完成学校 SSO 登录。每接入一个 AI 客户端都会单独确认，原有配置保留，修改前生成带时间戳的备份。
 

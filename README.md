@@ -1,6 +1,11 @@
 # canvas-session-mcp
 
-> 西浦 Learning Mall / Moodle 适配：见 [README-XJTLU.md](README-XJTLU.md)。运行 `npm run package:xjtlu` 生成可直接分享给学生的 HTML 安装指南（内置工具包）。原 Canvas 功能保留。
+> **西浦课程助手（Learning Mall / Moodle 适配）**：学生指南见 <https://shanyuzhang.github.io/xjtlu-core-mcp/>，说明见 [README-XJTLU.md](README-XJTLU.md)。
+>
+> macOS：`/bin/bash -c "$(curl -fsSL https://shanyuzhang.github.io/xjtlu-core-mcp/install.sh)"`
+> Windows PowerShell：`irm https://shanyuzhang.github.io/xjtlu-core-mcp/install.ps1 | iex`
+>
+> 本仓库基于 CorCvusRamboChen/canvas-session-mcp（MIT），原 Canvas 功能保留，下文是原项目说明。
 
 **Connect Claude, Cursor, Codex and other AI assistants to Canvas LMS — no access token needed.**
 **不用 Access Token，一条命令让 Claude / Cursor / Codex 等 AI 读你的 Canvas。**

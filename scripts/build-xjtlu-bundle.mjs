@@ -37,10 +37,24 @@ const directory = Buffer.concat(central); const end = Buffer.alloc(22); end.writ
 end.writeUInt16LE(files.length, 8); end.writeUInt16LE(files.length, 10); end.writeUInt32LE(directory.length, 12); end.writeUInt32LE(offset, 16);
 const zip = Buffer.concat([...local, directory, end]);
 const sha = crypto.createHash('sha256').update(zip).digest('hex');
+const site = (process.env.XJTLU_SITE || 'https://shanyuzhang.github.io/xjtlu-core-mcp').replace(/\/$/, '');
 const template = fs.readFileSync(path.join(root, 'docs/xjtlu-guide.template.html'), 'utf8');
-const html = template.replace('__BUNDLE_BASE64__', zip.toString('base64')).replace('__BUNDLE_SHA256__', sha).replace('__FILE_COUNT__', String(files.length)).replace('__BUILD_DATE__', new Date().toISOString().slice(0, 10));
-fs.mkdirSync(dist, { recursive: true });
+const html = template.replaceAll('__SITE__', site).replaceAll('__BUNDLE_SHA256__', sha).replaceAll('__FILE_COUNT__', String(files.length)).replaceAll('__BUILD_DATE__', new Date().toISOString().slice(0, 10));
+// Windows PowerShell 5.1 的 irm 在服务器未声明 charset 时按 Latin-1 解码，中文会乱码。
+// 所以发布的 install.ps1 只含 ASCII：可读源码以 UTF-8 Base64 内嵌，运行时解码执行。
+const ps1 = fs.readFileSync(path.join(root, 'scripts/bootstrap/install.ps1'));
+const ps1Wrapped = `# XJTLU course assistant installer for Windows. Readable source: scripts/bootstrap/install.ps1 in\r\n`
+  + `# https://github.com/shanyuzhang/xjtlu-core-mcp . Embedded as UTF-8 Base64 so Windows PowerShell 5.1 shows Chinese text correctly.\r\n`
+  + `iex ([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${ps1.toString('base64')}')))\r\n`;
+const siteDir = path.join(dist, 'site');
+fs.rmSync(siteDir, { recursive: true, force: true });
+fs.mkdirSync(siteDir, { recursive: true });
+const out = {
+  'index.html': html, 'install.sh': fs.readFileSync(path.join(root, 'scripts/bootstrap/install.sh')), 'install.ps1': ps1Wrapped,
+  'xjtlu-core-mcp.zip': zip, 'SHA256SUMS.txt': `${sha}  xjtlu-core-mcp.zip\n`, '.nojekyll': '',
+};
+for (const [name, value] of Object.entries(out)) fs.writeFileSync(path.join(siteDir, name), value);
 fs.writeFileSync(path.join(dist, 'xjtlu-core-mcp.zip'), zip);
 fs.writeFileSync(path.join(dist, 'xjtlu-core-guide.html'), html);
 fs.writeFileSync(path.join(dist, 'SHA256SUMS.txt'), `${sha}  xjtlu-core-mcp.zip\n`);
-console.log(`已生成 ${files.length} 个文件的工具包与内置 ZIP 的独立 HTML 指南：\n${dist}/xjtlu-core-guide.html\n${dist}/xjtlu-core-mcp.zip\nSHA-256: ${sha}`);
+console.log(`已生成 ${files.length} 个文件的工具包、学生指南和一行安装脚本：\n${dist}/xjtlu-core-guide.html\n${siteDir}/（GitHub Pages：${site}）\nSHA-256: ${sha}`);
