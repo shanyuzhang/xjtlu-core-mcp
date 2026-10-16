@@ -1,5 +1,5 @@
 # 西浦课程助手 · 一行安装（Windows PowerShell）
-#   irm https://shanyuzhang.github.io/xjtlu-core-mcp/install.ps1 | iex
+#   irm https://shanyuzhang.com/xjtlu-core-mcp/install.ps1 | iex
 # 没有 Node.js 20+ 时，下载官方 Node.js 到 %USERPROFILE%\.xjtlu-session-mcp\node（不需要管理员权限），
 # 然后下载工具包、安装依赖、打开学校登录窗口并连接 AI 应用。
 # 通过 iex 运行在用户自己的窗口里，所以出错时只抛出提示，不调用 exit（否则会关掉窗口）。
@@ -10,7 +10,7 @@
   try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
 
   $NodeVersion = 'v24.21.0'
-  $Site = if ($env:XJTLU_INSTALL_BASE) { $env:XJTLU_INSTALL_BASE } else { 'https://shanyuzhang.github.io/xjtlu-core-mcp' }
+  $Site = if ($env:XJTLU_INSTALL_BASE) { $env:XJTLU_INSTALL_BASE } else { 'https://shanyuzhang.com/xjtlu-core-mcp' }
   $RepoZip = 'https://github.com/shanyuzhang/xjtlu-core-mcp/archive/refs/heads/main.zip'
   $NodeMirrors = @('https://nodejs.org/dist', 'https://cdn.npmmirror.com/binaries/node')
   $AppHome = if ($env:XJTLU_MCP_HOME) { $env:XJTLU_MCP_HOME } else { Join-Path $HOME '.xjtlu-session-mcp' }

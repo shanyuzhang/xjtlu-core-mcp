@@ -37,7 +37,7 @@ const directory = Buffer.concat(central); const end = Buffer.alloc(22); end.writ
 end.writeUInt16LE(files.length, 8); end.writeUInt16LE(files.length, 10); end.writeUInt32LE(directory.length, 12); end.writeUInt32LE(offset, 16);
 const zip = Buffer.concat([...local, directory, end]);
 const sha = crypto.createHash('sha256').update(zip).digest('hex');
-const site = (process.env.XJTLU_SITE || 'https://shanyuzhang.github.io/xjtlu-core-mcp').replace(/\/$/, '');
+const site = (process.env.XJTLU_SITE || 'https://shanyuzhang.com/xjtlu-core-mcp').replace(/\/$/, '');
 const template = fs.readFileSync(path.join(root, 'docs/xjtlu-guide.template.html'), 'utf8');
 const html = template.replaceAll('__SITE__', site).replaceAll('__BUNDLE_SHA256__', sha).replaceAll('__FILE_COUNT__', String(files.length)).replaceAll('__BUILD_DATE__', new Date().toISOString().slice(0, 10));
 // Windows PowerShell 5.1 的 irm 在服务器未声明 charset 时按 Latin-1 解码，中文会乱码。
