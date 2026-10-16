@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>西浦课程助手</title>
+<meta name="description" content="让 AI 帮你查 Learning Mall 的 DDL、读课件、一键保存整门课的 PDF。复制一行命令自动装好。">
+<style>
+:root{
+  --s0:#f5f5f3;--s1:#fcfcfb;--s2:#ffffff;--s3:#ffffff;
+  --ink:#20201e;--ink-2:#373634;--muted:#6b6863;--faint:#a4a19b;--line:#e7e5df;--line-2:#dedcd6;
+  --clay:#d97757;--clay-em:#cc5a36;--clay-ink:#b4532f;--clay-lt:#fbf3ef;--clay-line:#f0d9cd;
+  --ok:#4f7a5a;--code-bg:#f5f5f3;--shadow:0 1px 2px rgb(32 32 30/.04),0 6px 24px rgb(32 32 30/.05);
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",Inter,system-ui,sans-serif;
+  --serif:"Songti SC","Noto Serif SC","Source Han Serif SC","STSong",ui-serif,Georgia,serif;
+  --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --s0:#151515;--s1:#1a1a19;--s2:#20201e;--s3:#262624;
+  --ink:#f2f1ed;--ink-2:#dedcd6;--muted:#a4a19b;--faint:#6b6863;--line:#2f2e2b;--line-2:#3a3936;
+  --clay:#d97757;--clay-em:#e08a6c;--clay-ink:#e8936f;--clay-lt:#2b201b;--clay-line:#4a3127;
+  --ok:#8fb89a;--code-bg:#151515;--shadow:0 1px 2px rgb(0 0 0/.3),0 8px 28px rgb(0 0 0/.25);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --s0:#151515;--s1:#1a1a19;--s2:#20201e;--s3:#262624;
+  --ink:#f2f1ed;--ink-2:#dedcd6;--muted:#a4a19b;--faint:#6b6863;--line:#2f2e2b;--line-2:#3a3936;
+  --clay:#d97757;--clay-em:#e08a6c;--clay-ink:#e8936f;--clay-lt:#2b201b;--clay-line:#4a3127;
+  --ok:#8fb89a;--code-bg:#151515;--shadow:0 1px 2px rgb(0 0 0/.3),0 8px 28px rgb(0 0 0/.25);color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--s1);color:var(--ink);font:15px/1.75 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer}
+code,.mono{font-family:var(--mono);font-size:.88em}
+h1,h2,h3{text-wrap:balance}
+p{text-wrap:pretty}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+.ico{width:1em;height:1em;vertical-align:-.125em;flex:none}
+:focus-visible{outline:2px solid var(--clay);outline-offset:3px;border-radius:6px}
+
+/* header */
+.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--s1) 86%,transparent);backdrop-filter:saturate(1.4) blur(12px);-webkit-backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid transparent;transition:border-color .2s}
+.top.scrolled{border-bottom-color:var(--line)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;text-decoration:none}
+.mark{width:28px;height:28px;border-radius:8px;background:var(--clay);color:#fff;display:grid;place-items:center;font:600 13px/1 var(--sans);letter-spacing:-.02em}
+.top nav{display:flex;align-items:center;gap:6px}
+.top nav a{font-size:13px;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:8px}
+.top nav a:hover{color:var(--ink);background:var(--s0)}
+.icon-btn{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--s2);color:var(--muted)}
+.icon-btn:hover{color:var(--ink);border-color:var(--line-2)}
+.theme-dark{display:none}
+:root[data-theme="dark"] .theme-dark{display:block}:root[data-theme="dark"] .theme-light{display:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .theme-dark{display:block}:root:not([data-theme="light"]) .theme-light{display:none}}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:56px;align-items:center;padding:72px 0 56px}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.06em;color:var(--clay-ink);text-transform:uppercase;margin:0 0 18px}
+.hero h1{font:600 clamp(36px,5.2vw,56px)/1.18 var(--serif);letter-spacing:-.01em;margin:0}
+.hero h1 em{font-style:normal;color:var(--clay)}
+.nb{display:inline-block}
+.lede{font-size:16.5px;color:var(--muted);margin:22px 0 0;max-width:30em}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 0;padding:0;list-style:none}
+.chips li{font-size:12.5px;color:var(--clay-ink);background:var(--clay-lt);border:1px solid var(--clay-line);padding:3px 11px;border-radius:999px}
+
+/* install card */
+.card{background:var(--s2);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.install{padding:22px}
+.install-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+.install-head h2{font:600 16px/1.3 var(--sans);margin:0}
+.seg{display:inline-flex;background:var(--s0);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;font-size:12.5px;color:var(--muted);padding:5px 12px;border-radius:7px}
+.seg button[aria-selected="true"]{background:var(--s3);color:var(--ink);box-shadow:0 1px 3px rgb(0 0 0/.08)}
+.step-row{display:grid;grid-template-columns:24px minmax(0,1fr);gap:12px;align-items:start}
+.step-row+.step-row{margin-top:18px}
+.dot{width:24px;height:24px;border-radius:50%;background:var(--clay-lt);color:var(--clay-ink);border:1px solid var(--clay-line);display:grid;place-items:center;font:600 12px/1 var(--mono);margin-top:2px}
+.step-row p{margin:0;font-size:13.5px;color:var(--muted)}
+.step-row strong{color:var(--ink);font-weight:600;display:block;font-size:14px;margin-bottom:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border-radius:11px;font-size:14.5px;font-weight:600;padding:12px 18px;border:1px solid transparent;text-decoration:none;transition:background .15s,transform .05s}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--clay);color:#fff;width:100%}
+.btn-primary:hover{background:var(--clay-em)}
+.btn-ghost{background:var(--s2);border-color:var(--line);color:var(--ink)}
+.btn-ghost:hover{border-color:var(--line-2);background:var(--s0)}
+.btn small{font:500 12px/1 var(--mono);opacity:.8}
+.cmd{position:relative;background:var(--code-bg);border:1px solid var(--line);border-radius:11px;padding:12px 44px 12px 14px;font:12.5px/1.65 var(--mono);color:var(--ink-2);overflow-wrap:anywhere;word-break:normal}
+.cmd::before{content:"$ ";color:var(--faint)}
+.cmd.win::before{content:"PS> "}
+.copy{position:absolute;top:7px;right:7px;width:30px;height:30px;display:grid;place-items:center;border-radius:8px;border:1px solid var(--line);background:var(--s2);color:var(--muted)}
+.copy:hover{color:var(--ink)}
+.copy.done{color:var(--ok)}
+.fine{font-size:12px;color:var(--faint);margin:14px 0 0;line-height:1.7}
+.step-row .fine{margin-top:10px}
+
+/* sections */
+section{padding:72px 0}
+.sec-head{max-width:640px;margin-bottom:36px}
+.sec-head h2{font:600 clamp(26px,3.4vw,34px)/1.3 var(--serif);margin:0}
+.sec-head p{color:var(--muted);margin:12px 0 0}
+.rule{border:0;border-top:1px solid var(--line);margin:0}
+
+/* chat demos */
+.demos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.chat{padding:22px;display:flex;flex-direction:column;gap:14px}
+.chat-label{font:500 11.5px/1 var(--mono);color:var(--faint);letter-spacing:.04em}
+.q{align-self:flex-end;max-width:88%;background:var(--s0);border:1px solid var(--line);border-radius:16px 16px 4px 16px;padding:10px 14px;font-size:14.5px}
+.call{display:flex;align-items:flex-start;gap:8px;font:12px/1.6 var(--mono);color:var(--muted);background:var(--s1);border:1px dashed var(--line-2);border-radius:10px;padding:8px 11px;overflow-wrap:anywhere}
+.call .ico{color:var(--clay);margin-top:3px}
+.a{font-size:14px;color:var(--ink-2)}
+.a p{margin:0 0 8px}
+.a ul{margin:0 0 8px;padding-left:1.1em}
+.a li{margin:2px 0}
+.a .due{font-family:var(--mono);font-size:12.5px;color:var(--clay-ink)}
+.tree{font:12.5px/1.7 var(--mono);background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:4px 0 10px;color:var(--ink-2);white-space:pre;overflow-x:auto}
+.note{font-size:12.5px;color:var(--faint);margin-top:18px}
+.more{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px}
+.prompt{text-align:left;background:var(--s2);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;transition:border-color .15s,background .15s}
+.prompt:hover{border-color:var(--clay-line);background:var(--clay-lt)}
+.prompt b{font-weight:500;font-size:14px;color:var(--ink)}
+.prompt span{font-size:12.5px;color:var(--muted)}
+.prompt i{font:normal 11.5px/1 var(--mono);color:var(--clay-ink);margin-top:4px}
+
+/* setup steps */
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.step{padding:22px}
+.step .num{font:600 13px/1 var(--mono);color:var(--clay-ink)}
+.step h3{font:600 17px/1.4 var(--sans);margin:12px 0 8px}
+.step p{margin:0;font-size:14px;color:var(--muted)}
+.step code{background:var(--s0);border:1px solid var(--line);padding:1px 6px;border-radius:6px;color:var(--ink-2);overflow-wrap:anywhere}
+.req{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:22px;font-size:13.5px;color:var(--muted)}
+.req span{display:inline-flex;align-items:center;gap:7px}
+.req .ico{color:var(--ok)}
+.req a{color:var(--clay-ink);text-underline-offset:3px}
+
+/* stats + tools */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.stat{padding:20px}
+.stat b{display:block;font:600 30px/1.1 var(--serif);font-variant-numeric:tabular-nums;color:var(--ink)}
+.stat span{display:block;font-size:13px;color:var(--muted);margin-top:8px}
+.stat.warn b{color:var(--clay-ink)}
+.table{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--s2)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font:500 12px/1.4 var(--mono);color:var(--faint);letter-spacing:.04em;background:var(--s1)}
+td:first-child{font:12.5px/1.7 var(--mono);color:var(--clay-ink);white-space:nowrap}
+td{color:var(--ink-2)}
+
+/* faq */
+.faq{max-width:780px}
+details{border-bottom:1px solid var(--line)}
+details:first-of-type{border-top:1px solid var(--line)}
+summary{list-style:none;cursor:pointer;padding:18px 32px 18px 0;font-weight:500;position:relative}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";position:absolute;right:6px;top:26px;width:8px;height:8px;border-right:1.5px solid var(--faint);border-bottom:1.5px solid var(--faint);transform:rotate(45deg);transition:transform .2s}
+details[open] summary::after{transform:rotate(-135deg);top:30px}
+details p{margin:0 0 16px;color:var(--muted);font-size:14px}
+details code{background:var(--s0);border:1px solid var(--line);padding:1px 6px;border-radius:6px;overflow-wrap:anywhere}
+.hash{font:12px/1.6 var(--mono);overflow-wrap:anywhere;color:var(--ink-2)}
+
+/* footer */
+footer{border-top:1px solid var(--line);background:var(--s0);padding:40px 0 48px;margin-top:24px}
+.notice{background:var(--s2);border:1px solid var(--line);border-left:3px solid var(--clay);border-radius:12px;padding:18px 20px;font-size:14px;color:var(--ink-2)}
+.notice strong{font-weight:600}
+.notice p{margin:0}
+.notice p+p{margin-top:8px}
+.foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px 24px;margin-top:22px;font-size:12.5px;color:var(--faint)}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,12px);opacity:0;pointer-events:none;background:var(--ink);color:var(--s1);font-size:13.5px;padding:10px 16px;border-radius:10px;box-shadow:var(--shadow);transition:opacity .2s,transform .2s;max-width:calc(100% - 32px);z-index:10}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr;gap:36px;padding:44px 0 40px}
+  .demos,.steps{grid-template-columns:1fr}
+  .more{grid-template-columns:1fr 1fr}
+  .stats{grid-template-columns:1fr 1fr}
+  section{padding:52px 0}
+}
+@media (max-width:560px){
+  .wrap{padding:0 16px}
+  .top nav a{display:none}
+  .more{grid-template-columns:1fr}
+  .install{padding:18px}
+  .install-head{flex-direction:column;align-items:flex-start}
+  .chat{padding:18px}
+  .q{max-width:100%}
+  th,td{padding:10px 12px}
+  td:first-child{white-space:normal;overflow-wrap:anywhere}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+/* v2 additions */
+.howto{font-size:13px;color:var(--muted);margin:0 0 8px}
+kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line-2);border-bottom-width:2px;border-radius:6px;padding:2px 6px;color:var(--ink-2)}
+.thinking{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--faint)}
+.thinking .ico{color:var(--clay)}
+.needs,.safe{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.need,.safe-item{padding:22px}
+.need .ico,.safe-item .ico{width:22px;height:22px;color:var(--clay)}
+.need h3,.safe-item h3{font:600 16px/1.4 var(--sans);margin:14px 0 6px}
+.need p,.safe-item p{margin:0;font-size:14px;color:var(--muted)}
+.need a,.faq a{color:var(--clay-ink);text-underline-offset:3px}
+@media (max-width:900px){.needs,.safe{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6.5 10.5 12 16l5.5-5.5M5 20h14"/></symbol>
+  <symbol id="i-tool" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+</svg>
+
+<header class="top" id="top">
+  <div class="wrap">
+    <a class="brand" href="#"><span class="mark" aria-hidden="true">XJ</span>西浦课程助手</a>
+    <nav aria-label="页面导航">
+      <a href="#demo">能做什么</a>
+      <a href="#install">安装</a>
+      <a href="#faq">常见问题</a>
+      <button class="icon-btn" id="theme" type="button" aria-label="切换浅色 / 深色">
+        <svg class="ico theme-light"><use href="#i-moon"/></svg><svg class="ico theme-dark"><use href="#i-sun"/></svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <p class="eyebrow">Learning Mall · 西浦</p>
+        <h1><span class="nb">让 AI 帮你</span><span class="nb">盯 DDL、读课件。</span></h1>
+        <p class="lede">装好以后，直接在 Claude 等 AI 应用里问：「我最近有哪些 DDL？」「把这门课的 PDF 都下下来。」用你自己的学校账号登录，课件只存在你自己的电脑上。</p>
+        <ul class="chips" aria-label="特点"><li>只看不改，不会替你交作业</li><li>资料留在自己电脑</li><li>免费开源</li></ul>
+      </div>
+
+      <div class="card install" id="install" aria-labelledby="install-title">
+        <div class="install-head">
+          <h2 id="install-title">复制一行，自动装好</h2>
+          <div class="seg" role="tablist" aria-label="选择电脑系统">
+            <button role="tab" type="button" data-os="mac" aria-selected="true">Mac</button>
+            <button role="tab" type="button" data-os="windows" aria-selected="false">Windows</button>
+          </div>
+        </div>
+        <div class="step-row">
+          <span class="dot">1</span>
+          <div>
+            <strong data-os-text="mac:打开「终端」|windows:打开 PowerShell"></strong>
+            <p data-os-html="mac:按 <kbd>⌘</kbd> + <kbd>空格</kbd>，输入「终端」，按回车。|windows:按 <kbd>Win</kbd> 键，输入「PowerShell」，按回车。"></p>
+          </div>
+        </div>
+        <div class="step-row">
+          <span class="dot">2</span>
+          <div>
+            <strong>粘贴下面这一行，按回车</strong>
+            <div class="cmd" id="cmd"><span id="cmd-text"></span><button class="copy" type="button" data-copy-target="cmd-text" aria-label="复制命令"><svg class="ico"><use href="#i-copy"/></svg></button></div>
+          </div>
+        </div>
+        <div class="step-row">
+          <span class="dot">3</span>
+          <div>
+            <strong>在弹出的窗口登录学校账号</strong>
+            <p>点「XJTLU Account」，输入账号密码。登录完窗口会自己关闭；最后问你要连接哪个 AI 应用，直接按回车就是「要」。</p>
+          </div>
+        </div>
+        <p class="fine">电脑上没有 Node.js 也没关系，会自动装好。大约需要 2–5 分钟。</p>
+      </div>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <section id="demo">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">装好以后</p>
+        <h2>像问同学一样问 AI</h2>
+        <p>AI 会自己去 Learning Mall 找答案。它能看到的，就是你登录后在网页上本来就能看到的内容。</p>
+      </div>
+
+      <div class="demos">
+        <article class="card chat" aria-label="示例：查询 DDL">
+          <span class="chat-label">示例 · 查 DDL</span>
+          <div class="q">目前有哪些 DDL？</div>
+          <div class="thinking"><svg class="ico"><use href="#i-spark"/></svg>正在查看你每门课的作业和测验…</div>
+          <div class="a">
+            <p>按截止时间排好了：</p>
+            <ul>
+              <li><span class="due">周五 23:59</span>　MTH129 · Coursework 1</li>
+              <li><span class="due">下周一 10:00</span>　Quiz 3 开放，限时 40 分钟</li>
+              <li><span class="due">下周三 17:00</span>　Lab Report 2，要交 PDF</li>
+            </ul>
+            <p>要我把 Coursework 1 的题目和评分要求整理出来吗？</p>
+          </div>
+        </article>
+
+        <article class="card chat" aria-label="示例：批量下载课件">
+          <span class="chat-label">示例 · 一键存课件</span>
+          <div class="q">帮我把这门课的 PDF 下载出来，形成文件夹。</div>
+          <div class="thinking"><svg class="ico"><use href="#i-spark"/></svg>正在下载这门课的全部资料…</div>
+          <div class="a">
+            <p>找到 81 个文件，全部下载好了。重复上传的只留一份，一共 76 个文件、37.5 MB：</p>
+            <div class="tree">文稿 / XJTLU Core / course-5331
+├─ Lecture 1.pdf
+├─ Lecture 2.pdf
+├─ …（共 32 份 PDF）
+└─ Lab 1.ipynb …</div>
+            <p>要先帮你读 Lecture 1 吗？</p>
+          </div>
+        </article>
+      </div>
+      <p class="note">「存课件」的数字来自一次真实使用；DDL 那段是示意，课程和日期已替换。</p>
+
+      <div class="more">
+        <button class="prompt" type="button" data-prompt="列出我所有的西浦课程，包括往年的课程。"><b>列出我的所有课程</b><span>包括往年的课程</span><i>点击复制</i></button>
+        <button class="prompt" type="button" data-prompt="读一下这门课的 Lecture 1，先总结前五页，再解释里面的关键概念。"><b>读 Lecture 1，讲讲前五页</b><span>PDF、Word 都能读</span><i>点击复制</i></button>
+        <button class="prompt" type="button" data-prompt="把这门课 Coursework 1 的要求、截止时间和评分标准整理成一张清单。"><b>把作业要求整理成清单</b><span>要求、截止时间、评分标准</span><i>点击复制</i></button>
+        <button class="prompt" type="button" data-prompt="这门课每周都讲了什么？按周列出讲义和实验资料。"><b>这门课每周讲了什么</b><span>按周列出讲义和实验</span><i>点击复制</i></button>
+        <button class="prompt" type="button" data-prompt="对照 Lab Report 2 的要求，检查我写的报告还缺哪些部分。"><b>对照要求检查我的作业</b><span>逐条比对作业说明</span><i>点击复制</i></button>
+        <button class="prompt" type="button" data-prompt="根据这门课的讲义，帮我做一份期末复习提纲。"><b>做一份复习提纲</b><span>根据讲义整理重点</span><i>点击复制</i></button>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section id="needs">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">开始之前</p>
+        <h2>你需要准备</h2>
+      </div>
+      <div class="needs">
+        <article class="card need"><svg class="ico"><use href="#i-home"/></svg><h3>一台 Mac 或 Windows 电脑</h3><p>不需要管理员密码，也不用改任何系统设置。</p></article>
+        <article class="card need"><svg class="ico"><use href="#i-eye"/></svg><h3>Chrome 或 Edge 浏览器</h3><p>用来登录学校账号。没有的话先<a href="https://www.google.com/chrome/" target="_blank" rel="noreferrer">装一个 Chrome</a>。</p></article>
+        <article class="card need"><svg class="ico"><use href="#i-spark"/></svg><h3>一个电脑版 AI 应用</h3><p>推荐 <a href="https://claude.ai/download" target="_blank" rel="noreferrer">Claude 桌面版</a>，也支持 Codex、Cursor、Windsurf。网页版聊天暂时连不上。</p></article>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section id="safe">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">安全吗</p>
+        <h2>你的账号，只在你的电脑上</h2>
+      </div>
+      <div class="safe">
+        <article class="card safe-item"><svg class="ico"><use href="#i-lock"/></svg><h3>密码只输在学校登录页</h3><p>工具不会让你在别处输入密码，也不会保存密码。它只记住登录状态，就像浏览器的“保持登录”。</p></article>
+        <article class="card safe-item"><svg class="ico"><use href="#i-eye"/></svg><h3>只看，不改</h3><p>不会提交作业、开始测验、发帖或改成绩，也不会绕过任何人机验证。</p></article>
+        <article class="card safe-item"><svg class="ico"><use href="#i-home"/></svg><h3>资料留在你电脑上</h3><p>登录状态和课件都只存在你自己的电脑。注意：你让 AI 读的内容，会发给你所用的 AI 服务。</p></article>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">常见问题</p>
+        <h2>遇到问题？</h2>
+      </div>
+      <div class="faq">
+        <details><summary>登录过期了，或者 AI 说“需要重新登录”</summary><p>再运行一次同一行安装命令就行，会重新弹出登录窗口。Node.js 已经装好的话不会重复下载。</p></details>
+        <details><summary>装好了，但 AI 里找不到我的课程</summary><p>先把 AI 应用<b>完全退出</b>（Mac 上按 <kbd>⌘</kbd> + <kbd>Q</kbd>），再重新打开。还不行的话，再运行一次安装命令，最后问你要不要连接 AI 应用时按回车。</p></details>
+        <details><summary>提示“没有找到 Claude 桌面版、Codex、Cursor 或 Windsurf”</summary><p>先安装其中一个（推荐 <a href="https://claude.ai/download" target="_blank" rel="noreferrer">Claude 桌面版</a>），打开一次，再运行一次安装命令。</p></details>
+        <details><summary>登录窗口一直白屏</summary><p>关掉这个窗口，确认网络正常后再运行一次安装命令。工具用的是一个独立的浏览器窗口，和你平时用的 Chrome 互不影响。</p></details>
+        <details><summary>下载很慢，或者提示下载失败</summary><p>安装程序会自动换用国内镜像。仍然失败的话，换个网络（比如校园网或手机热点）再试一次。</p></details>
+        <details><summary>它能做什么，不能做什么？</summary><p>能查课程、作业和测验的时间与要求，能读讲义 PDF、Word，能把整门课的资料存到电脑。扫描版 PDF（图片）读不出文字；单个文件最大 60 MB；外部网站上的资料不会下载。</p></details>
+        <details><summary>可以把这个网页发给同学吗？</summary><p>可以。网页里没有任何人的账号信息，同学用自己的学校账号登录。但不要把你电脑上的 <code>.xjtlu-session-mcp</code> 文件夹发给别人，那里有你的登录状态。</p></details>
+        <details><summary>怎么卸载？</summary><p>删除用户目录下的 <code>.xjtlu-session-mcp</code> 文件夹即可；AI 应用的设置里会多一个叫 <code>xjtlu-core</code> 的连接，也可以一并删掉。下载的课件在「文稿 / XJTLU Core」，想留就留着。</p></details>
+        <details><summary>给懂技术的同学</summary><p>这是一个本地 stdio MCP 服务器，共 9 个只读工具（课程、作业/测验、活动、文件列表、读文件、批量保存、导出目录等），源码在 <a href="https://github.com/shanyuzhang/xjtlu-core-mcp" target="_blank" rel="noreferrer">GitHub</a>。安装命令会把 Node.js（官方二进制包，校验 SHA-256）和程序装进 <code>~/.xjtlu-session-mcp</code>，再修改你同意的 AI 客户端配置，并保留备份。登录窗口是不受自动化控制的普通 Chrome / Edge。目前在 macOS 上实测通过；Windows 脚本按同样流程编写，尚未真机测试。</p><p>工具包 SHA-256<br><span class="hash">b47663ba5ab45c48859a9b6d0ff425de210e8dc2d0e50eaa868126c1af421c9d</span><br>构建于 2026-10-16 · 28 个文件</p></details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="notice">
+      <p><strong>使用须知：</strong>本项目是学生做的非官方工具，与西交利物浦大学无关。它只读取你登录后在网页上本来就能看到的内容，不会提交作业、开始测验、发帖或修改成绩，也不会自动完成或绕过任何人机验证。</p>
+      <p>请遵守学校的 IT 政策，不要外传课程资料，并遵守各科关于 AI 使用的规定。</p>
+    </div>
+    <div class="foot">
+      <span>西浦课程助手 · MIT License · 思路与部分实现参考了开源项目 canvas-session-mcp</span>
+      <span>Learning Mall 归属西交利物浦大学 · Moodle 是 Moodle Pty Ltd 的商标</span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(() => {
+  const SITE = 'https://shanyuzhang.github.io/xjtlu-core-mcp';
+  const COMMANDS = {
+    mac: `/bin/bash -c "$(curl -fsSL ${SITE}/install.sh)"`,
+    windows: `irm ${SITE}/install.ps1 | iex`,
+  };
+  const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+  const toastEl = document.getElementById('toast'); let toastTimer;
+  const toast = (text) => { toastEl.textContent = text; toastEl.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200); };
+
+  const root = document.documentElement;
+  const saved = store.get('theme'); if (saved === 'light' || saved === 'dark') root.dataset.theme = saved;
+  document.getElementById('theme').addEventListener('click', () => {
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark'; store.set('theme', root.dataset.theme);
+  });
+  const top = document.getElementById('top');
+  addEventListener('scroll', () => top.classList.toggle('scrolled', scrollY > 8), { passive: true });
+
+  const pick = (spec, os) => (spec.split('|').map((s) => s.split(/:(.*)/s)).find(([k]) => k === os) || [])[1] || '';
+  const cmd = document.getElementById('cmd'); const cmdText = document.getElementById('cmd-text');
+  const selectOs = (os) => {
+    document.querySelectorAll('[data-os]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.os === os)));
+    document.querySelectorAll('[data-os-text]').forEach((el) => { el.textContent = pick(el.dataset.osText, os); });
+    document.querySelectorAll('[data-os-html]').forEach((el) => { el.innerHTML = pick(el.dataset.osHtml, os); });
+    cmdText.textContent = COMMANDS[os]; cmd.classList.toggle('win', os === 'windows');
+  };
+  document.querySelectorAll('[data-os]').forEach((b) => b.addEventListener('click', () => selectOs(b.dataset.os)));
+  selectOs(/Win/i.test(navigator.userAgentData?.platform || navigator.platform || navigator.userAgent) ? 'windows' : 'mac');
+
+  const copy = async (text) => {
+    try { await navigator.clipboard.writeText(text); return true; }
+    catch {
+      const area = document.createElement('textarea'); area.value = text; area.style.position = 'fixed'; area.style.opacity = '0';
+      document.body.append(area); area.select(); let ok = false; try { ok = document.execCommand('copy'); } catch {} area.remove();
+      if (!ok) toast('无法自动复制，请手动选中后复制。');
+      return ok;
+    }
+  };
+  document.querySelectorAll('[data-copy-target]').forEach((b) => b.addEventListener('click', async () => {
+    if (!await copy(document.getElementById(b.dataset.copyTarget).textContent)) return;
+    const use = b.querySelector('use'); b.classList.add('done'); use.setAttribute('href', '#i-check');
+    toast('已复制。粘贴到终端，按回车。');
+    setTimeout(() => { b.classList.remove('done'); use.setAttribute('href', '#i-copy'); }, 1800);
+  }));
+  document.querySelectorAll('[data-prompt]').forEach((b) => b.addEventListener('click', async () => {
+    if (await copy(b.dataset.prompt)) toast('已复制，粘贴到你的 AI 应用里。');
+  }));
+})();
+</script>
+</body>
+</html>
