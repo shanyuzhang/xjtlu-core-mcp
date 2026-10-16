@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>西浦课程 · 本地连接</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<body><header><a class="brand" href="/">XC<span>西浦课程连接</span></a><span class="tag">本地管理</span></header>
+<main><section class="hero"><p class="eyebrow">LEARNING MALL · YOUR OWN SESSION</p><h1>课程资料，<br>连接到你的 AI。</h1><p>用自己的学校账号登录，读取自己有权访问的课程。<br>登录窗口由学校提供，密码无需交给 AI。</p></section>
+<section class="connection"><div><span id="status" class="status">检查连接中</span><h2 id="site">Learning Mall Core</h2><p id="connection-note">正在检查本地登录状态…</p></div><div class="actions"><button id="login">连接学校账号</button><button id="refresh" class="secondary">刷新状态</button></div></section>
+<div id="notice" role="status" aria-live="polite"></div>
+<section class="workspace"><div class="section-heading"><div><p class="eyebrow">MY COURSES</p><h2>我的课程</h2></div><button id="load-courses" class="secondary">读取课程</button></div><label class="search">筛选课程<input id="search" type="search" placeholder="输入课程名称或代码"></label><div id="courses" class="course-grid"><p class="empty">连接学校账号后，点击「读取课程」。</p></div></section>
+<section id="detail" hidden><div class="section-heading"><h2 id="course-name"></h2><div class="actions"><button id="assignments" class="secondary">查看作业 / 测验</button><button id="save-course">保存课程资料</button></div></div><div id="items"></div></section>
+<section id="result-section" hidden><h2>读取结果</h2><pre id="result"></pre></section>
+<details><summary>手动接入 MCP / 本地文件位置</summary><p>学生安装向导会自动生成配置。手动接入时，复制下方 JSON 到支持 stdio MCP 的客户端。Codex 使用 README 中的 TOML 格式。</p><pre id="mcp"></pre><p id="downloads"></p><p>学校会话保存在电脑上；MCP 返回的课程文字会交给你选择的 AI 客户端处理。</p></details>
+<footer>非西浦官方工具 · 不提交作业，不开始测验 · 页面仅绑定 127.0.0.1</footer></main></body></html>

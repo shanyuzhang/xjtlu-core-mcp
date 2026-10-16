@@ -4,7 +4,10 @@
   "description": "MCP server that connects AI assistants (Claude, Cursor, Codex…) to Canvas LMS using your normal browser login — no access token needed. Read-only.",
   "main": "src/server.js",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "xjtlu": "node bin/xjtlu-cli.js",
+    "web": "node bin/xjtlu-cli.js web",
+    "package:xjtlu": "node scripts/build-xjtlu-bundle.mjs"
   },
   "keywords": [
     "canvas",
@@ -20,6 +23,8 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
+    "htmlparser2": "^10.1.0",
+    "domutils": "^3.2.2",
     "@modelcontextprotocol/sdk": "^1.32.0",
     "html-to-text": "^10.0.1",
     "mammoth": "^1.13.0",
@@ -28,11 +33,13 @@
     "zod": "^4.6.5"
   },
   "bin": {
-    "canvas-session-mcp": "bin/cli.js"
+    "canvas-session-mcp": "bin/cli.js",
+    "xjtlu-session-mcp": "bin/xjtlu-cli.js"
   },
   "files": [
     "bin",
     "src",
+    "web",
     "README.md",
     "LICENSE"
   ],
