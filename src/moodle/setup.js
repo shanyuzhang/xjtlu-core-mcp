@@ -47,6 +47,11 @@ export function installTarget(target, launch) {
   return { file: target.file, backup: prior ? backup : null };
 }
 
+// npm 在 Windows 上是 .cmd 包装脚本，Node 只能通过 shell 启动；shell 只接受一整条命令行，
+// 所以与 src/setup.js 相同：每个参数加引号后拼接（参考仓库提交 60065e6）。
+const q = (a) => (process.platform === 'win32' ? `"${String(a).replace(/"/g, '""')}"` : `'${String(a).replace(/'/g, "'\\''")}'`);
+const sh = (cmd, args, opts = {}) => spawnSync([cmd, ...args.map(q)].join(' '), { shell: true, ...opts });
+
 export function stableInstall(log = () => {}) {
   const root = path.join(DATA_DIR, 'app');
   if (path.resolve(ROOT) === path.resolve(root)) return launchConfig(root);
@@ -57,8 +62,7 @@ export function stableInstall(log = () => {}) {
   }
   log('正在安装运行依赖到独立的本地目录…');
   const args = ['ci', '--omit=dev', '--no-audit', '--no-fund', '--ignore-scripts'];
-  const result = spawnSync(process.platform === 'win32' ? 'npm.cmd' : 'npm', args,
-    { cwd: root, stdio: 'inherit', shell: process.platform === 'win32' });
+  const result = sh('npm', args, { cwd: root, stdio: 'inherit' });
   if (result.status !== 0) throw new Error('依赖安装失败，请检查 Node.js、npm 和网络后重试。');
   return launchConfig(root);
 }

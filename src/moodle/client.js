@@ -155,9 +155,10 @@ export class MoodleClient {
     if (!/^\/pluginfile\.php\//.test(url.pathname) && !/^\/mod\/resource\/view\.php$/.test(url.pathname)) throw new Error('仅支持课程资源或 pluginfile 文件链接。');
     let result = await this.request(url.href);
     if (result.contentType.includes('html') && url.pathname.startsWith('/mod/resource/')) {
-      const files = parsePage(result.buffer.toString('utf8'), this.base).files;
-      if (!files.length) throw new Error('此资源页面中没有可下载的文件。');
-      url = allowedUrl(files[0].url, this.base);
+      // 「嵌入显示」的资源页先出现 iframe 的 ?embed=1 地址，取第一个符合白名单的文件链接。
+      const allowed = parsePage(result.buffer.toString('utf8'), this.base).files.map((f) => { try { return allowedUrl(f.url, this.base); } catch { return null; } }).filter(Boolean);
+      if (!allowed.length) throw new Error('此资源页面中没有可下载的文件。');
+      url = allowed[0];
       result = await this.request(url.href);
     }
     if (result.contentType.includes('html') && !new URL(result.url).pathname.startsWith('/pluginfile.php/')) throw new Error('文件不可用，收到的仍是课程页面。');

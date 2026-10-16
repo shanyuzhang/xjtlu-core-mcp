@@ -53,6 +53,7 @@ before(async () => {
     }
     if (u.pathname === '/course/view.php') return send(fixture);
     if (u.pathname === '/mod/resource/view.php' && u.searchParams.get('id') === '99') { res.writeHead(302, { Location: 'https://evil.example/steal' }); res.end(); return; }
+    if (u.pathname === '/mod/resource/view.php' && u.searchParams.get('id') === '97') return send('<main id="region-main"><iframe src="/pluginfile.php/125/mod_resource/content/0/lecture.pdf?embed=1"></iframe><a href="/pluginfile.php/125/mod_resource/content/0/lecture.pdf">lecture.pdf</a></main>');
     if (u.pathname === '/mod/resource/view.php' && u.searchParams.get('id') === '98') return send('x'.repeat(100), 'application/octet-stream');
     if (u.pathname === '/mod/resource/view.php') { res.writeHead(303, { Location: '/pluginfile.php/123/mod_resource/content/1/notes.txt' }); res.end(); return; }
     if (u.pathname === '/mod/folder/view.php') return send('<h1>Lab folder</h1><main id="region-main"><a href="/pluginfile.php/124/mod_folder/content/0/notes-copy.txt?forcedownload=1">Notes</a></main>');
@@ -107,6 +108,11 @@ test('resource redirect, text extraction, content deduplication and batch files'
   const second = await client.readFile(`${base}/pluginfile.php/124/mod_folder/content/0/notes-copy.txt`, '1');
   assert.equal(second.duplicate, true); assert.equal(first.path, second.path);
   const saved = await client.saveCourse('1'); assert.equal(saved.failed.length, 0); assert.equal(saved.saved.length, 2);
+});
+
+test('embedded resource page downloads the plain file link instead of the ?embed one', async () => {
+  const file = await make().readFile(`${base}/mod/resource/view.php?id=97`, '1');
+  assert.equal(file.contentType, 'application/pdf'); assert.ok(fs.existsSync(file.path));
 });
 
 test('same-name different content is not overwritten', async () => {

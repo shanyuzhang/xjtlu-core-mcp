@@ -119,4 +119,6 @@ npm run package:xjtlu
 
 测试使用假 Moodle 服务器和真实 stdio MCP 客户端，涵盖解析、课程分页、Cookie 范围、重定向边界、文件去重、会话失效、客户端配置合并和本地网页接口。浏览器站点检查与新 MCP 真机验证结果应分别记录，不能互相替代。
 
-真机记录（2026-10-17，macOS，Chrome 155，AY25/26 归档站）：MCP 专用窗口登录并保存会话成功；`verify-xjtlu-live.mjs --course-id 5331 --resource-id 84827` 经真实 stdio MCP 7/7 通过（课程列表完整、课程详情、作业/测验、活动、文件列表、PDF 下载 581076 字节并提取文字）。Windows、Linux 与 Edge 的新登录流程尚未真机验证；`moodle_save_course_files` 批量保存与本地网页的「连接学校账号」按钮未在真实站点上单独验证。
+真机记录（2026-10-17，macOS，Chrome 155，AY25/26 归档站）：MCP 专用窗口登录并保存会话成功；`verify-xjtlu-live.mjs --course-id 5331 --resource-id 84827` 经真实 stdio MCP 7/7 通过（课程列表完整、课程详情、作业/测验、活动、文件列表、PDF 下载 581076 字节并提取文字）。同日经真实 stdio MCP 调用 `moodle_save_course_files` 保存课程 5331：扫描 81 个文件链接，81 个成功、0 个失败，磁盘去重后 76 个文件约 37.5 MB，PDF 文件头全部有效；重复执行不新增文件。设为「嵌入显示」的资源页会先出现 `?embed=1` 的 iframe 地址，下载时取第一个符合白名单的链接。
+
+Windows 部分按参考仓库 canvas-session-mcp 的做法实现（npm 这类 `.cmd` 包装脚本通过 shell 启动，每个参数加引号后拼成一条命令行；浏览器从 Chrome / Edge 标准安装位置查找；登录完成后用不带 `/F` 的 `taskkill` 让浏览器正常退出），**未在 Windows 真机验证**。Linux、Edge 与本地网页的「连接学校账号」按钮同样未在真实站点上单独验证。
