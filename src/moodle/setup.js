@@ -17,18 +17,30 @@ export function upsertMoodleToml(text, launch) {
   return text.replace(re, '').trimEnd() + `\n\n${section}`;
 }
 
-export function targets(home = os.homedir(), platform = process.platform) {
+export function targets(home = os.homedir(), platform = process.platform, { env = process.env, onPath = (cmd) => sh(cmd, ['--version']).status === 0 } = {}) {
   const desktop = platform === 'darwin' ? path.join(home, 'Library', 'Application Support', 'Claude')
-    : platform === 'win32' ? path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'Claude') : path.join(home, '.config', 'Claude');
+    : platform === 'win32' ? path.join(env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'Claude') : path.join(home, '.config', 'Claude');
+  // Kimi Code CLI 读 ~/.kimi-code/mcp.json（可用 KIMI_CODE_HOME 改位置）；旧版 kimi-cli 读 ~/.kimi/mcp.json。
+  const kimiHome = env.KIMI_CODE_HOME || path.join(home, '.kimi-code');
+  const kimi = fs.existsSync(kimiHome) || !fs.existsSync(path.join(home, '.kimi')) ? kimiHome : path.join(home, '.kimi');
   return [
+    // Claude Code 的用户级配置由它自己的命令维护（与参考仓库相同），不直接改 ~/.claude.json。
+    { id: 'claude-code', name: 'Claude Code', file: 'claude mcp add --scope user', detect: () => onPath('claude'), format: 'claude-cli' },
+    { id: 'kimi-code', name: 'Kimi Code', file: path.join(kimi, 'mcp.json'), detect: kimi, format: 'json' },
     { id: 'codex', name: 'Codex', file: path.join(home, '.codex', 'config.toml'), detect: path.join(home, '.codex'), format: 'toml' },
     { id: 'claude-desktop', name: 'Claude Desktop', file: path.join(desktop, 'claude_desktop_config.json'), detect: desktop, format: 'json' },
     { id: 'cursor', name: 'Cursor', file: path.join(home, '.cursor', 'mcp.json'), detect: path.join(home, '.cursor'), format: 'json' },
     { id: 'windsurf', name: 'Windsurf', file: path.join(home, '.codeium', 'windsurf', 'mcp_config.json'), detect: path.join(home, '.codeium', 'windsurf'), format: 'json' },
-  ].filter((t) => fs.existsSync(t.detect));
+  ].filter((t) => (typeof t.detect === 'function' ? t.detect() : fs.existsSync(t.detect)));
 }
 
 export function installTarget(target, launch) {
+  if (target.format === 'claude-cli') {
+    sh('claude', ['mcp', 'remove', '--scope', 'user', ID]);
+    const r = sh('claude', ['mcp', 'add', '--scope', 'user', ID, '--', launch.command, ...launch.args]);
+    if (r.status !== 0) throw new Error('claude mcp add 失败，请确认 Claude Code 可以正常运行。');
+    return { file: target.file, backup: null };
+  }
   const prior = fs.existsSync(target.file) ? fs.readFileSync(target.file, 'utf8') : '';
   let next;
   if (target.format === 'toml') next = upsertMoodleToml(prior, launch);

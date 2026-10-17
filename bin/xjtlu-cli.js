@@ -50,7 +50,7 @@ try {
     }
     if (values.quick) {
       if (connected.length) log(`\n✓ 全部完成。请完全退出并重新打开 ${connected.join('、')}，然后问一句：「我最近有哪些 DDL？」`);
-      else log(`\n${values['no-login'] ? '安装完成' : '学校账号已连接'}，但${found.length ? '你没有选择要连接的 AI 应用' : '电脑上没有找到 Claude 桌面版、Codex、Cursor 或 Windsurf'}。\n先安装其中一个（推荐 Claude 桌面版：https://claude.ai/download），再重新运行同一行安装命令即可。`);
+      else log(`\n${values['no-login'] ? '安装完成' : '学校账号已连接'}，但${found.length ? '你没有选择要连接的 AI 应用' : '电脑上没有找到支持的 AI 应用（Codex、Claude Code、Kimi Code、Claude 桌面版、Cursor、Windsurf）'}。\n先安装其中一个，打开一次，再重新运行同一行安装命令即可。`);
     } else {
       log('安装完成。请重启已接入的 AI 客户端，询问「列出我的西浦课程」。');
       log(`手动配置：\n${JSON.stringify({ mcpServers: { 'xjtlu-core': launch } }, null, 2)}`);

@@ -13,7 +13,7 @@ import { MoodleSession, loginResponseHint, signedInResponse } from '../src/moodl
 import { EventEmitter } from 'node:events';
 import { parseCourse, parseIdentity, parsePage } from '../src/moodle/parse.js';
 import { createWebServer } from '../src/moodle/web.js';
-import { installTarget, upsertMoodleToml } from '../src/moodle/setup.js';
+import { installTarget, upsertMoodleToml, targets } from '../src/moodle/setup.js';
 import { invokeTool } from '../src/moodle/tools.js';
 
 const home = fs.mkdtempSync(path.join(os.tmpdir(), 'xjtlu-test-'));
@@ -266,4 +266,32 @@ test('one-line installer scripts are well-formed and keep the npm/Node fallbacks
   assert.match(text, /--quick/); assert.match(text, /SHASUMS256/); assert.match(text, /registry\.npmmirror\.com/);
   const ps1 = fs.readFileSync(sh.replace(/install\.sh$/, 'install.ps1'), 'utf8');
   assert.match(ps1, /--quick/); assert.match(ps1, /Get-FileHash/); assert.doesNotMatch(ps1, /^[^#\n]*\bexit\b/m);
+});
+
+test('Kimi Code and Claude Code are detected and connected', () => {
+  const fake = fs.mkdtempSync(path.join(os.tmpdir(), 'xjtlu-clients-'));
+  const launch = { command: '/x/node', args: ['/x/xjtlu-cli.js', 'serve'] };
+  // 旧版 kimi-cli（只有 ~/.kimi）写到 ~/.kimi/mcp.json；有 ~/.kimi-code 时优先新版位置。
+  fs.mkdirSync(path.join(fake, '.kimi'));
+  let kimi = targets(fake, 'darwin', { env: {}, onPath: () => false }).find((t) => t.id === 'kimi-code');
+  assert.equal(kimi.file, path.join(fake, '.kimi', 'mcp.json'));
+  fs.mkdirSync(path.join(fake, '.kimi-code'));
+  kimi = targets(fake, 'darwin', { env: {}, onPath: () => false }).find((t) => t.id === 'kimi-code');
+  assert.equal(kimi.file, path.join(fake, '.kimi-code', 'mcp.json'));
+  installTarget(kimi, launch);
+  assert.deepEqual(JSON.parse(fs.readFileSync(kimi.file, 'utf8')).mcpServers['xjtlu-core'], launch);
+  assert.equal(targets(fake, 'darwin', { env: {}, onPath: () => false }).some((t) => t.id === 'claude-code'), false);
+
+  if (process.platform === 'win32') return;
+  const bin = path.join(fake, 'bin'); fs.mkdirSync(bin);
+  const log = path.join(fake, 'claude.log');
+  fs.writeFileSync(path.join(bin, 'claude'), `#!/bin/sh\nprintf '%s\\n' "$*" >> '${log}'\n`, { mode: 0o755 });
+  const saved = process.env.PATH; process.env.PATH = `${bin}:${saved}`;
+  try {
+    const claude = targets(fake, 'darwin', { env: {} }).find((t) => t.id === 'claude-code');
+    assert.ok(claude); installTarget(claude, launch);
+  } finally { process.env.PATH = saved; }
+  const calls = fs.readFileSync(log, 'utf8').trim().split('\n');
+  assert.equal(calls.at(-1), 'mcp add --scope user xjtlu-core -- /x/node /x/xjtlu-cli.js serve');
+  assert.ok(calls.includes('mcp remove --scope user xjtlu-core'));
 });
