@@ -192,6 +192,15 @@ footer{border-top:1px solid var(--line);background:var(--s0);padding:40px 0 48px
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 
 /* v2 additions */
+.gh-btn{display:inline-flex;align-items:center;width:auto;gap:6px;padding:0 10px;text-decoration:none;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.gh-count{font:500 11.5px/1 var(--mono);color:var(--muted);border-left:1px solid var(--line);padding-left:7px;margin-left:1px;font-variant-numeric:tabular-nums}
+.star-cta{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px 22px;margin-bottom:16px}
+.star-cta h3{font:600 16px/1.4 var(--sans);margin:0 0 4px}
+.star-cta p{margin:0;font-size:14px;color:var(--muted)}
+.btn-star{flex:none;background:var(--ink);color:var(--s1);font-size:14px}
+.btn-star:hover{background:var(--ink-2)}
+.btn-star .gh-count{color:inherit;opacity:.75;border-left-color:currentColor}
+@media (max-width:560px){.top nav a.gh-btn{display:inline-flex;justify-content:center}.gh-text{display:none}.gh-btn .gh-count{display:none}.gh-btn{width:34px;padding:0}.star-cta{flex-direction:column;align-items:stretch}.btn-star{width:100%}}
 .lang-btn{width:auto;min-width:34px;padding:0 9px;font:600 12px/1 var(--mono);letter-spacing:.02em}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .seg-mode{display:flex;width:100%;margin-bottom:14px}
@@ -218,6 +227,8 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
   <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
   <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6.5 10.5 12 16l5.5-5.5M5 20h14"/></symbol>
   <symbol id="i-tool" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></symbol>
+  <symbol id="i-github" viewBox="0 0 16 16"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.9.9-4.25 4.1 1 5.8L12 16.9l-5.25 2.7 1-5.8L3.5 9.7l5.9-.9z"/></symbol>
   <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
   <symbol id="i-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></symbol>
@@ -233,6 +244,7 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
       <a href="#demo" data-en="What it does">能做什么</a>
       <a href="#install" data-en="Install">安装</a>
       <a href="#faq" data-en="FAQ">常见问题</a>
+      <a class="icon-btn gh-btn" href="https://github.com/shanyuzhang/xjtlu-core-mcp" target="_blank" rel="noreferrer" aria-label="在 GitHub 上查看并 Star" data-aria-en="View and star on GitHub"><svg class="ico"><use href="#i-github"/></svg><span class="gh-text">Star</span><span class="gh-count" data-stars hidden></span></a>
       <button class="icon-btn lang-btn" id="lang" type="button" aria-label="Switch to English / 切换到中文">EN</button>
       <button class="icon-btn" id="theme" type="button" aria-label="切换浅色 / 深色" data-aria-en="Toggle light / dark">
         <svg class="ico theme-light"><use href="#i-moon"/></svg><svg class="ico theme-dark"><use href="#i-sun"/></svg>
@@ -434,6 +446,7 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
 
 <footer>
   <div class="wrap">
+    <div class="card star-cta"><div data-en="&lt;div&gt;&lt;h3&gt;Find it useful? Give it a star on GitHub&lt;/h3&gt;&lt;p&gt;All the source code is public. A star helps more classmates find it, and you’re welcome to report problems or suggest features there too.&lt;/p&gt;&lt;/div&gt;"><div><h3>觉得好用？去 GitHub 点个 Star</h3><p>源码完全公开。Star 能让更多同学看到它；遇到问题或者有想要的功能，也欢迎在 GitHub 上提。</p></div></div><a class="btn btn-star" href="https://github.com/shanyuzhang/xjtlu-core-mcp" target="_blank" rel="noreferrer" data-en="&lt;svg class=&quot;ico&quot;&gt;&lt;use href=&quot;#i-star&quot;/&gt;&lt;/svg&gt;Star on GitHub&lt;span class=&quot;gh-count&quot; data-stars hidden&gt;&lt;/span&gt;"><svg class="ico"><use href="#i-star"/></svg>在 GitHub 上 Star<span class="gh-count" data-stars hidden></span></a></div>
     <div class="notice">
       <p data-en="&lt;strong&gt;Please note:&lt;/strong&gt; this is an unofficial tool made by a student and is not affiliated with Xi’an Jiaotong-Liverpool University. It only reads what you can already see on the website after signing in. It never submits work, starts quizzes, posts, or changes grades, and it never completes or gets around any bot check."><strong>使用须知：</strong>本项目是学生做的非官方工具，与西交利物浦大学无关。它只读取你登录后在网页上本来就能看到的内容，不会提交作业、开始测验、发帖或修改成绩，也不会自动完成或绕过任何人机验证。</p>
       <p data-en="Please follow XJTLU’s IT policies, don’t share course materials outside the university, and follow each module’s rules on using AI.">请遵守学校的 IT 政策，不要外传课程资料，并遵守各科关于 AI 使用的规定。</p>
@@ -529,7 +542,16 @@ ${AGENT_COMMANDS[os]}
   document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => selectMode(b.dataset.mode)));
   currentOs = /Win/i.test(navigator.userAgentData?.platform || navigator.platform || navigator.userAgent) ? 'windows' : 'mac';
   applyLang();
-  document.getElementById('lang').addEventListener('click', () => { lang = lang === 'en' ? 'zh' : 'en'; store.set('lang', lang); applyLang(); });
+  const showStars = (n) => {
+    if (!(n > 0)) return;
+    const text = n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+    document.querySelectorAll('[data-stars]').forEach((el) => { el.textContent = text; el.hidden = false; });
+  };
+  // 语言切换会重写按钮内容，所以星数记下来，切换后再填一次。
+  let stars = 0;
+  fetch('https://api.github.com/repos/shanyuzhang/xjtlu-core-mcp', { signal: AbortSignal.timeout?.(6000) })
+    .then((r) => (r.ok ? r.json() : null)).then((d) => { stars = d?.stargazers_count || 0; showStars(stars); }).catch(() => {});
+  document.getElementById('lang').addEventListener('click', () => { lang = lang === 'en' ? 'zh' : 'en'; store.set('lang', lang); applyLang(); showStars(stars); });
 
   const copy = async (text) => {
     try { await navigator.clipboard.writeText(text); return true; }
