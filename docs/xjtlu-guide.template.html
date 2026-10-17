@@ -470,24 +470,16 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
     mac: `XJTLU_SETUP_ARGS="--yes --clients all" /bin/bash -c "$(curl -fsSL ${SITE}/install.sh)"`,
     windows: `$env:XJTLU_SETUP_ARGS='--yes --clients all'; irm ${SITE}/install.ps1 | iex`,
   };
-  const askTextEn = (os) => `Please install the "XJTLU Course Assistant" for me, so that you can read my XJTLU Learning Mall modules from now on (deadlines, lecture notes, downloading course files).
-
-Please run the command below in ${os === 'windows' ? 'PowerShell' : 'Terminal'}. It needs internet access and writes to my home folder (the .xjtlu-session-mcp folder); if you need permission, just ask me:
+  const askTextEn = (os) => `Please install "XJTLU Course Assistant" so you can read my Learning Mall modules. Run this in ${os === 'windows' ? 'PowerShell' : 'Terminal'} (it needs internet access and writes to my home folder; ask me for permission if needed):
 
 ${AGENT_COMMANDS[os]}
 
-While it runs, a browser window will pop up for me to sign in to my XJTLU account myself. This step waits until I've signed in and may take a few minutes, so please set this command's timeout to at least 10 minutes and don't stop it early. Never ask me for my password in the chat.
-
-When it's done, tell me the result in a sentence or two and remind me which AI app I need to restart. Instructions: ${SITE}/`;
-  const askText = (os) => `请帮我安装「西浦课程助手」，让你以后能读取我的西浦 Learning Mall 课程（查 DDL、读课件、下载课件）。
-
-请在${os === 'windows' ? ' PowerShell ' : '终端'}里运行下面这条命令。它需要联网，并会写入我的用户目录（.xjtlu-session-mcp 文件夹）；如果需要权限，直接向我申请：
+A browser window will pop up for me to sign in to XJTLU. Set the timeout to at least 10 minutes and wait for me; never ask for my password in chat. When it's done, tell me the result and which app to restart.`;
+  const askText = (os) => `请帮我安装「西浦课程助手」，让你能读取我的 Learning Mall 课程。在${os === 'windows' ? ' PowerShell ' : '终端'}运行下面的命令（需要联网、会写入我的用户目录，要权限就直接申请）：
 
 ${AGENT_COMMANDS[os]}
 
-运行过程中会弹出一个浏览器窗口，让我自己登录学校账号。这一步要等我登录完，可能需要几分钟，所以请把这条命令的超时时间设为至少 10 分钟，不要提前结束。不要让我在聊天里提供密码。
-
-完成后，用一两句话告诉我结果，并提醒我需要重启哪个 AI 应用。安装说明：${SITE}/`;
+中途会弹出浏览器窗口让我登录学校账号，请把超时设为至少 10 分钟，等我登录完；不要在聊天里问我密码。装好后告诉我结果，以及要重启哪个应用。`;
   const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
   const toastEl = document.getElementById('toast'); let toastTimer;
   const toast = (text) => { toastEl.textContent = text; toastEl.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200); };
