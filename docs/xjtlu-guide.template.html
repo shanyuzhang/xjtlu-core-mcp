@@ -469,20 +469,30 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
     mac: `/bin/bash -c "$(curl -fsSL ${SITE}/install.sh)"`,
     windows: `irm ${SITE}/install.ps1 | iex`,
   };
+  // 有 Node.js 时走 npm（指定国内镜像，安装依赖时也沿用）；没有就用一行命令自动装 Node.js。
+  const NPX_AGENT = 'npx --registry=https://registry.npmmirror.com -y xjtlu-core-mcp@latest setup --yes --clients all';
   const AGENT_COMMANDS = {
     mac: `XJTLU_SETUP_ARGS="--yes --clients all" /bin/bash -c "$(curl -fsSL ${SITE}/install.sh)"`,
     windows: `$env:XJTLU_SETUP_ARGS='--yes --clients all'; irm ${SITE}/install.ps1 | iex`,
   };
-  const askTextEn = (os) => `Please install "XJTLU Course Assistant" so you can read my Learning Mall modules. Run this in ${os === 'windows' ? 'PowerShell' : 'Terminal'} (it needs internet access and writes to my home folder; ask me for permission if needed):
+  const askTextEn = (os) => `Please install "XJTLU Course Assistant" so you can read my Learning Mall modules.
 
+If this computer has Node.js 20 or newer, run:
+${NPX_AGENT}
+
+If not, run this in ${os === 'windows' ? 'PowerShell' : 'Terminal'} instead (it installs Node.js automatically):
 ${AGENT_COMMANDS[os]}
 
-A browser window will pop up for me to sign in to XJTLU. Set the timeout to at least 10 minutes and wait for me; never ask for my password in chat. When it's done, tell me the result and which app to restart.`;
-  const askText = (os) => `请帮我安装「西浦课程助手」，让你能读取我的 Learning Mall 课程。在${os === 'windows' ? ' PowerShell ' : '终端'}运行下面的命令（需要联网、会写入我的用户目录，要权限就直接申请）：
+It needs internet access and writes to my home folder; ask me for permission if needed. A browser window will pop up for me to sign in to XJTLU: set the timeout to at least 10 minutes and wait for me, and never ask for my password in chat. When it's done, tell me the result and which app to restart.`;
+  const askText = (os) => `请帮我安装「西浦课程助手」，让你能读取我的 Learning Mall 课程。
 
+如果电脑上有 Node.js 20 以上，运行：
+${NPX_AGENT}
+
+没有的话，在${os === 'windows' ? ' PowerShell ' : '终端'}运行这条（会自动装好 Node.js）：
 ${AGENT_COMMANDS[os]}
 
-中途会弹出浏览器窗口让我登录学校账号，请把超时设为至少 10 分钟，等我登录完；不要在聊天里问我密码。装好后告诉我结果，以及要重启哪个应用。`;
+需要联网、会写入我的用户目录，要权限就直接申请。中途会弹出浏览器窗口让我登录学校账号，请把超时设为至少 10 分钟，等我登录完；不要在聊天里问我密码。装好后告诉我结果，以及要重启哪个应用。`;
   const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
   const toastEl = document.getElementById('toast'); let toastTimer;
   const toast = (text) => { toastEl.textContent = text; toastEl.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200); };

@@ -14,7 +14,7 @@ Windows 在 PowerShell 中运行 `irm https://shanyuzhang.com/xjtlu-core-mcp/ins
 
 已经装了 Node.js 20+ 的同学也可以直接用 npm 包：`npx -y xjtlu-core-mcp@latest setup`。没有 Node.js 的电脑上没有 `npx`，所以面向学生的主入口仍是上面的一行命令。
 
-也可以让能运行命令的 AI（Codex、Claude Code、Kimi Code 等）代装：指南页「让 AI 帮我装」提供一段可复制的话，其中命令带 `XJTLU_SETUP_ARGS="--yes --clients all"`。没有交互终端时安装不再提问，直接连接检测到的全部 AI 应用（修改前同样备份）；登录仍由学生本人在弹出的窗口完成，AI 需要把命令超时设为 10 分钟以上。
+也可以让能运行命令的 AI（Codex、Claude Code、Kimi Code 等）代装：指南页「让 AI 帮我装」提供一段可复制的话：有 Node.js 20+ 时运行 `npx --registry=https://registry.npmmirror.com -y xjtlu-core-mcp@latest setup --yes --clients all`（镜像设置会沿用到安装依赖），没有时运行带 `XJTLU_SETUP_ARGS="--yes --clients all"` 的一行命令。没有交互终端时安装不再提问，直接连接检测到的全部 AI 应用（修改前同样备份）；登录仍由学生本人在弹出的窗口完成，AI 需要把命令超时设为 10 分钟以上。
 
 一行安装脚本（源码在 `scripts/bootstrap/`）会：没有 Node.js 20+ 时下载官方 Node.js v24.21.0 到 `~/.xjtlu-session-mcp/node`（先试 nodejs.org，慢或失败时换 npmmirror，均按 SHA256SUMS 校验，不需要管理员权限）；检查 Chrome / Edge；从 npm 下载 `xjtlu-core-mcp` 包（先 npmmirror 再 npm 官方源，按 npm 公布的 sha512 校验；都失败时改用 GitHub Pages 和 GitHub 仓库 ZIP）；npm 官方源连不上时改用 npmmirror；然后运行 `setup`（默认快速模式，`--custom` 才逐项询问）（沿用默认学校地址和课件目录，只询问是否连接检测到的 AI 应用，回车即同意）。重新运行同一行命令即可重新登录或更新。
 
