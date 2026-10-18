@@ -42,6 +42,8 @@ Windows 在 PowerShell 中运行 `irm https://shanyuzhang.com/xjtlu-core-mcp/ins
 
 MCP 服务器在连接时向 AI 客户端提供使用说明（`src/moodle/server.js` 的 `INSTRUCTIONS`）：需求不明确时先问学生是要查 DDL、下载课件还是读讲义；下载前确认是哪门课、要整门还是部分；DDL 先查 `moodle_upcoming_deadlines`（Moodle 时间线，一次覆盖所有课程），再对相关课程用 `moodle_find_deadlines` 读取 Module Handbook、Coursework / Assessment Specification 等文件，摘出写着日期或周次的句子并注明来源，来源不一致时标出；结果直接在对话里用列表或表格给出，不生成 Excel，最后可以问一句是否要做成 HTML。
 
+下载时可以用 `save_dir` 指定保存位置：AI 在学生打开的工作文件夹里使用时，默认存到这个文件夹（整门课会建一个以课程名命名的子文件夹），并告诉学生完整路径；不指定时存到默认课件目录「文稿/XJTLU Core/course-<课程ID>」。`save_dir` 必须是学生用户目录内的绝对路径，且不能是 `~/.xjtlu-session-mcp`（里面有登录状态）。
+
 `moodle_find_deadlines` 只读不存盘：按文件名（handbook、specification、brief、coursework、assessment、schedule 等）挑出最多 4 份（可调到 8 份）文件读取文字，摘录同时出现「写明的日期或第 N 周」和「截止、提交、作业、考试」等字样的句子；PDF 表格被拆成短行时，会往上找表头把日期行拼在一起。摘录可能不完整，以学校文件原文为准。
 
 ## 开发目录运行

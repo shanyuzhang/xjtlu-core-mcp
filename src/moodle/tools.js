@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 const id = z.union([z.number().int().positive(), z.string().regex(/^\d+$/)]).transform(String);
 const url = z.string().url();
+const saveDir = z.string().min(1).max(500).optional().describe('保存到哪个文件夹：完整路径（绝对路径），必须在学生自己的用户目录里。不填则存到默认课件目录（文稿/XJTLU Core）。');
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 export const MOODLE_TOOLS = [
@@ -21,11 +22,11 @@ export const MOODLE_TOOLS = [
     input: { activity_id: id, type: z.enum(['assign', 'quiz', 'forum', 'page', 'folder', 'resource', 'url']) }, run: (c, a) => c.activity(a.activity_id, a.type) },
   { name: 'moodle_list_files', description: '列出课程中的文件、文件夹和页面入口；文件夹内部文件用 moodle_get_activity 读取。', input: { course_id: id },
     async run(c, a) { const course = await c.course(a.course_id); return { course: course.name, items: course.items.filter((x) => ['resource', 'folder', 'page'].includes(x.type)) }; } },
-  { name: 'moodle_read_file', localWrite: true, description: '下载学校站点中的课件到本地并返回 PDF / DOCX / HTML / 文本内容。可用 offset 分段读取。',
-    input: { url, course_id: id.optional(), offset: z.number().int().min(0).optional(), max_chars: z.number().int().min(500).max(100000).optional() },
-    run: (c, a) => c.readFile(a.url, a.course_id, a) },
-  { name: 'moodle_save_course_files', localWrite: true, description: '将一门课的可见文件和文件夹内资料保存到本地；按内容去重，返回失败项和扫描范围。调用前先和学生确认是哪门课、要整门课还是其中一部分。',
-    input: { course_id: id, max: z.number().int().min(1).max(500).optional() }, run: (c, a) => c.saveCourse(a.course_id, a.max) },
+  { name: 'moodle_read_file', localWrite: true, description: '下载学校站点中的课件到本地并返回 PDF / DOCX / HTML / 文本内容。可用 offset 分段读取。save_dir 可指定保存到哪个文件夹（如学生当前的工作文件夹），文件直接放在其中。',
+    input: { url, course_id: id.optional(), offset: z.number().int().min(0).optional(), max_chars: z.number().int().min(500).max(100000).optional(), save_dir: saveDir },
+    run: (c, a) => c.readFile(a.url, a.course_id, { offset: a.offset, max_chars: a.max_chars, saveDir: a.save_dir }) },
+  { name: 'moodle_save_course_files', localWrite: true, description: '将一门课的可见文件和文件夹内资料保存到本地；按内容去重，返回保存文件夹、失败项和扫描范围。save_dir 可指定保存位置（如学生当前的工作文件夹），会在其中建一个以课程名命名的子文件夹。调用前先和学生确认是哪门课、要整门课还是其中一部分、存到哪里。',
+    input: { course_id: id, max: z.number().int().min(1).max(500).optional(), save_dir: saveDir }, run: (c, a) => c.saveCourse(a.course_id, a.max, { saveDir: a.save_dir }) },
   { name: 'moodle_export_course_html', localWrite: true, description: '导出本地课程目录 HTML，包含资料名称、说明、日期和学校原始链接；不包含登录凭据。',
     input: { course_id: id }, async run(c, a) {
       const course = await c.course(a.course_id);

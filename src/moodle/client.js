@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { DATA_DIR, secureJson, settings } from './config.js';
@@ -85,14 +86,26 @@ export function deadlineLines(text, max = 25) {
   return out;
 }
 
+// 学生指定的保存位置：必须是完整路径、在自己的用户目录里，且不是课程助手自己的数据目录（里面有登录状态）。
+export function saveDirectory(dir, { home = os.homedir(), dataDir = DATA_DIR } = {}) {
+  if (typeof dir !== 'string' || !path.isAbsolute(dir)) throw new Error('保存位置必须是完整的文件夹路径（绝对路径）。');
+  const resolved = path.resolve(dir);
+  const inside = (parent, child) => { const rel = path.relative(path.resolve(parent), child); return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel)); };
+  if (!inside(home, resolved)) throw new Error('只能保存到你自己用户目录里的文件夹。');
+  if (inside(dataDir, resolved)) throw new Error('不能保存到课程助手自己的数据目录。');
+  return resolved;
+}
+
 export class MoodleClient {
-  constructor({ base, downloads, session, fetchImpl = fetch, dataDir = DATA_DIR } = {}) {
+  constructor({ base, downloads, session, fetchImpl = fetch, dataDir = DATA_DIR, home = os.homedir() } = {}) {
     const config = settings();
     this.base = base || config.base;
     this.downloads = downloads || config.downloads;
     this.session = session || new MoodleSession(this.base);
     this.fetch = fetchImpl;
     this.indexPath = path.join(dataDir, 'downloads.json');
+    this.dataDir = dataDir;
+    this.home = home;
     this.downloadQueue = Promise.resolve();
   }
 
@@ -286,8 +299,8 @@ export class MoodleClient {
     };
   }
 
-  async download(url, courseId) {
-    const run = () => this.downloadFile(url, courseId);
+  async download(url, courseId, dir) {
+    const run = () => this.downloadFile(url, courseId, dir);
     const task = this.downloadQueue.then(run, run);
     this.downloadQueue = task.catch(() => {});
     return task;
@@ -312,10 +325,10 @@ export class MoodleClient {
     return { url, result, name };
   }
 
-  async downloadFile(value, courseId) {
+  async downloadFile(value, courseId, dir) {
     const { url, result, name } = await this.fetchFile(value);
     const sha = crypto.createHash('sha256').update(result.buffer).digest('hex');
-    const courseDir = path.join(this.downloads, courseId ? `course-${numericId(courseId)}` : 'unfiled');
+    const courseDir = dir || path.join(this.downloads, courseId ? `course-${numericId(courseId)}` : 'unfiled');
     let index = {};
     try { index = JSON.parse(fs.readFileSync(this.indexPath, 'utf8')); } catch (e) { if (e.code !== 'ENOENT') throw new Error('下载索引损坏，请备份后修复 downloads.json。'); }
     const twin = Object.values(index).find((x) => x.sha === sha && x.courseDir === courseDir && fs.existsSync(x.path));
@@ -334,14 +347,18 @@ export class MoodleClient {
     return { name, path: file, size: result.buffer.length, contentType: result.contentType, duplicate: !!twin, sha256: sha, buffer: result.buffer };
   }
 
-  async readFile(url, courseId, { offset = 0, max_chars = 20000 } = {}) {
-    const { buffer, ...file } = await this.download(url, courseId);
+  async readFile(url, courseId, { offset = 0, max_chars = 20000, saveDir } = {}) {
+    const dir = saveDir ? saveDirectory(saveDir, { home: this.home, dataDir: this.dataDir }) : undefined;
+    const { buffer, ...file } = await this.download(url, courseId, dir);
     const body = await extractText(buffer, { name: file.name, contentType: file.contentType });
     return { ...file, text: body === null ? '此格式已保存，但暂不支持文本提取。' : !body.trim() ? '文件没有文本层（扫描件需要 OCR）。' : window(body, { offset, maxChars: max_chars }) };
   }
 
-  async saveCourse(courseId, max = 150) {
+  async saveCourse(courseId, max = 150, { saveDir } = {}) {
+    // 先检查保存位置，避免读完整门课才发现路径不允许。
+    const base = saveDir ? saveDirectory(saveDir, { home: this.home, dataDir: this.dataDir }) : null;
     const course = await this.course(courseId);
+    const folder = base ? path.join(base, safeName(course.name || `course-${numericId(courseId)}`)) : path.join(this.downloads, `course-${numericId(courseId)}`);
     const resources = course.items.filter((x) => x.available && ['resource', 'folder', 'page'].includes(x.type));
     const urls = new Set(); const failed = []; const saved = [];
     for (const item of resources) {
@@ -351,10 +368,10 @@ export class MoodleClient {
       } catch (e) { failed.push({ name: item.name, error: e.message }); }
     }
     for (const url of [...urls].slice(0, max)) {
-      try { const { buffer, ...file } = await this.download(url, courseId); saved.push(file); }
+      try { const { buffer, ...file } = await this.download(url, courseId, folder); saved.push(file); }
       catch (e) { failed.push({ url, error: e.message }); }
     }
-    return { course_id: String(courseId), found: urls.size, processed: saved.length + failed.length, truncated: urls.size > max, saved, failed,
+    return { course_id: String(courseId), course: course.name, folder, found: urls.size, processed: saved.length + failed.length, truncated: urls.size > max, saved, failed,
       note: '扫描可见资源、文件夹和课程页面的文件链接；未递归追踪外部站点、论坛附件或受限内容。已存文件按内容去重，每次仍会请求服务器以确认内容。' };
   }
 }

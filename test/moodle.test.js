@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { MoodleClient, allowedUrl, deadlineLines, docScore } from '../src/moodle/client.js';
+import { MoodleClient, allowedUrl, deadlineLines, docScore, saveDirectory } from '../src/moodle/client.js';
 import { MoodleSession, loginResponseHint, signedInResponse } from '../src/moodle/session.js';
 import { EventEmitter } from 'node:events';
 import { parseCourse, parseIdentity, parsePage } from '../src/moodle/parse.js';
@@ -202,6 +202,29 @@ test('deadline extraction handles flattened PDF tables, long table rows and igno
   assert.deepEqual(deadlineLines('Due Date\nWe meet in room 1/2.\nweek 3 recap'), []);
 });
 
+test('files can be saved into a folder the student chooses, but only inside their own home and outside the session data', async () => {
+  const userHome = fs.mkdtempSync(path.join(os.tmpdir(), 'xjtlu-user-'));
+  const dataDir = path.join(userHome, '.xjtlu-session-mcp');
+  assert.throws(() => saveDirectory('relative/folder', { home: userHome, dataDir }), /完整的文件夹路径/);
+  assert.throws(() => saveDirectory(path.join(os.tmpdir(), 'elsewhere'), { home: userHome, dataDir }), /用户目录/);
+  assert.throws(() => saveDirectory(path.join(userHome, 'a', '..', '..', 'escape'), { home: userHome, dataDir }), /用户目录/);
+  assert.throws(() => saveDirectory(path.join(dataDir, 'files'), { home: userHome, dataDir }), /数据目录/);
+  const project = path.join(userHome, 'Study', 'Stats project');
+  assert.equal(saveDirectory(project, { home: userHome, dataDir }), project);
+
+  const c = new MoodleClient({ base, session, downloads: path.join(userHome, 'Documents', 'XJTLU Core'), dataDir, home: userHome });
+  const one = await c.readFile(`${base}/pluginfile.php/125/lecture.pdf`, '1', { saveDir: project });
+  assert.equal(path.dirname(one.path), project); assert.ok(fs.existsSync(one.path));
+  const all = await c.saveCourse('1', 150, { saveDir: project });
+  assert.equal(all.folder, path.join(project, 'AI & Maths')); assert.equal(all.failed.length, 0);
+  assert.ok(all.saved.length > 0 && all.saved.every((f) => path.dirname(f.path) === all.folder));
+  assert.equal(fs.existsSync(path.join(userHome, 'Documents', 'XJTLU Core')), false);
+  await assert.rejects(c.saveCourse('1', 150, { saveDir: '/etc' }), /用户目录/);
+  const plain = await c.saveCourse('1');
+  assert.equal(plain.folder, path.join(userHome, 'Documents', 'XJTLU Core', 'course-1'));
+  fs.rmSync(userHome, { recursive: true, force: true });
+});
+
 test('same-name different content is not overwritten', async () => {
   const c = make(); c.fetch = async () => new Response('A different lecture', { headers: { 'Content-Type': 'text/plain' } });
   const prior = await make().readFile(`${base}/pluginfile.php/2/notes.txt`, '1');
@@ -340,6 +363,8 @@ test('real stdio MCP advertises tools and reports missing login without starting
   try {
     const { tools } = await mcp.listTools(); assert.equal(tools.length, 11);
     assert.match(mcp.getInstructions(), /先问清需求/); assert.match(mcp.getInstructions(), /moodle_find_deadlines/); assert.match(mcp.getInstructions(), /不要生成 Excel/);
+    assert.match(mcp.getInstructions(), /save_dir/);
+    for (const name of ['moodle_read_file', 'moodle_save_course_files']) assert.ok(tools.find((t) => t.name === name).inputSchema.properties.save_dir);
     assert.equal(mcp.getServerVersion().version, JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version);
     assert.equal(tools.find((t) => t.name === 'moodle_get_course').annotations.readOnlyHint, true);
     assert.equal(tools.find((t) => t.name === 'moodle_save_course_files').annotations.readOnlyHint, false);
