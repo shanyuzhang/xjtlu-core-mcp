@@ -61,7 +61,16 @@ export function parseCourse(html, base) {
     }
     result.push({ name, items });
   }
-  return { name: title(doc), sections: result, items: result.flatMap((s) => s.items) };
+  // 新版站点（grid 等格式，或「每节单独一页」）把各节内容放到 /course/section.php?id=N，
+  // 课程主页只内嵌第 0 节，其余以卡片链接呈现。收集这些链接，供 client 逐页抓取后合并。
+  const sectionLinks = [];
+  const seenSection = new Set();
+  for (const a of all(main(doc), (n) => n.name === 'a' && !!n.attribs?.href)) {
+    const u = localLink(a.attribs.href, base);
+    const sid = u?.pathname === '/course/section.php' ? u.searchParams.get('id') : null;
+    if (sid && /^\d+$/.test(sid) && !seenSection.has(sid)) { seenSection.add(sid); sectionLinks.push(u.href); }
+  }
+  return { name: title(doc), sections: result, items: result.flatMap((s) => s.items), sectionLinks };
 }
 
 export function parsePage(html, base) {

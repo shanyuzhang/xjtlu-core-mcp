@@ -9,6 +9,10 @@ export class LoginRequired extends Error {
   constructor() { super('登录已失效或尚未登录。请在本地页面点击「连接学校账号」，或运行 npm run xjtlu -- login。'); this.code = 'LOGIN_REQUIRED'; }
 }
 
+export class RestrictedActivity extends Error {
+  constructor() { super('此活动或资源当前受限，可能设有访问条件或时间窗口，暂时无法读取。截止日期等信息仍可从课程页面获取。'); this.code = 'RESTRICTED'; }
+}
+
 export function loginResponseHint(status, body = '') {
   if ([400, 431].includes(status) && /(?:request header|cookie).{0,80}(?:too (?:large|long)|exceed)/i.test(body)) {
     return '请求头或 Cookie 过大；需要重置本工具的独立浏览器会话。';
@@ -82,6 +86,9 @@ const quit = (proc) => new Promise((resolve) => {
   if (process.platform === 'win32') execFile('taskkill', ['/pid', String(proc.pid), '/t'], () => {});
   else proc.kill('SIGINT');
 });
+
+// 归档站用自定义登录页 /local/login/index.php，当前学年站点用标准的 /login/index.php。
+const isLoginPage = (pathname) => /^\/(?:local\/)?login\/index\.php$/.test(pathname);
 
 export class MoodleSession {
   constructor(base, { stateFile = STATE_FILE, profileDir = PROFILE_DIR, launchBrowser = (dir, options) => chromium.launchPersistentContext(dir, options),
@@ -188,7 +195,7 @@ export class MoodleSession {
         await new Promise((resolve) => setTimeout(resolve, this.pollMs));
         for (const r of watcher.read()) {
           if (signedInResponse(r, this.base)) { signedIn = true; break; }
-          if (r.url.origin === this.base && r.url.pathname === '/local/login/index.php') progress('学校入口已显示，请点击 XJTLU Account。');
+          if (r.url.origin === this.base && isLoginPage(r.url.pathname)) progress('学校入口已显示，请点击 XJTLU Account。');
           if (r.url.hostname === 'uim.xjtlu.edu.cn' && r.status === 200 && r.url.pathname.endsWith('/accountPsw.js')) progress('学校认证表单已显示，请在此专用窗口输入账号密码。');
           if (r.url.hostname === 'uim.xjtlu.edu.cn' && r.status === 400 && r.url.pathname === '/ngw/context') progress('学校认证网关拒绝了此窗口（HTTP 400），登录表单可能不会显示。');
         }
@@ -254,10 +261,10 @@ export class MoodleSession {
       const cookies = this.state()?.cookies;
       if (cookies?.length) await context.addCookies(cookies);
       const page = context.pages()[0] || await context.newPage();
-      const entry = cookies?.length ? '/my/' : '/local/login/index.php';
+      const entry = '/my/';
       progress('浏览器已启动，正在加载学校入口…');
       try { await page.goto(this.base + entry, { waitUntil: 'commit', timeout: 45000 }); }
-      catch { throw new Error('学校入口加载失败，请先在普通浏览器确认归档站可访问，再检查网络或代理设置。'); }
+      catch { throw new Error('学校入口加载失败，请先在普通浏览器确认 Learning Mall 可访问，再检查网络或代理设置。'); }
       if (!headless) await page.bringToFront();
       const deadline = Date.now() + timeoutMs;
       let startedSso = false;
@@ -272,8 +279,8 @@ export class MoodleSession {
           }
           if (!tab.url().startsWith(`${this.base}/`)) continue;
           // 无头浏览器带 webdriver 标记，不能进入学校认证中心，否则网关会标记此 profile；会话失效时交给可见登录。
-          if (headless && new URL(tab.url()).pathname === '/local/login/index.php') throw new Error('需要手动登录，请点击「连接学校账号」。');
-          if (!startedSso && new URL(tab.url()).pathname === '/local/login/index.php') {
+          if (headless && isLoginPage(new URL(tab.url()).pathname)) throw new Error('需要手动登录，请点击「连接学校账号」。');
+          if (!startedSso && isLoginPage(new URL(tab.url()).pathname)) {
             progress('学校入口已显示，正在进入 XJTLU Account…');
             const account = tab.getByRole('link', { name: 'XJTLU Account', exact: true });
             if (await account.count() === 1) {

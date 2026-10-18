@@ -2,7 +2,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-export const DEFAULT_URL = 'https://core-archive25-26.xjtlu.edu.cn';
+// 默认连当前学年站点；25-26 学年归档站仍可用 --url 指定。
+export const DEFAULT_URL = 'https://core.xjtlu.edu.cn';
+export const ARCHIVE_URL = 'https://core-archive25-26.xjtlu.edu.cn';
 export const DATA_DIR = process.env.XJTLU_MCP_HOME || path.join(os.homedir(), '.xjtlu-session-mcp');
 export const STATE_FILE = path.join(DATA_DIR, 'session.json');
 // 旧的 browser-profile 曾由自动化浏览器访问学校认证中心，网关会给它发放被标记的持久 Cookie，

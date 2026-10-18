@@ -1,6 +1,6 @@
 # 西浦 Learning Mall Core MCP
 
-适配西浦 Moodle，默认访问 AY25/26 归档站 `https://core-archive25-26.xjtlu.edu.cn`。与原 Canvas MCP 共存，客户端配置名称为 `xjtlu-core`。这是独立的非官方适配，保留原项目 MIT 许可及作者信息。
+适配西浦 Moodle，默认访问当前学年站点 `https://core.xjtlu.edu.cn`（25-26 学年归档站 `https://core-archive25-26.xjtlu.edu.cn` 可用 `--url` 指定）。与原 Canvas MCP 共存，客户端配置名称为 `xjtlu-core`。这是独立的非官方适配，保留原项目 MIT 许可及作者信息。
 
 ## 发给其他学生
 
@@ -80,7 +80,7 @@ args = ["/absolute/path/to/bin/xjtlu-cli.js", "serve"]
 | `serve` | stdio MCP，默认命令 |
 | `web` | 可选本地课程操作页面 |
 
-`--url https://core.xjtlu.edu.cn` 可切换当前学年站点；需重新运行 `login`，并确认新站点兼容性。当前实测目标是 AY25/26 归档站；其他学年不作兼容性保证。
+默认连当前学年站点。`--url https://core-archive25-26.xjtlu.edu.cn` 可切换到 25-26 学年归档站，切换后需重新运行 `login`。旧版本默认保存的是归档站：快速模式（一行安装命令或 `setup`）重新运行时，保存的地址若是归档站，会自动改为当前学年站点；其他自定义地址保持不变。
 
 | 环境变量 | 作用 |
 | --- | --- |
@@ -105,7 +105,7 @@ args = ["/absolute/path/to/bin/xjtlu-cli.js", "serve"]
 
 - `moodle_list_courses` 优先使用 Moodle 课程 AJAX 接口，最多分页 30 次，每次 100 条。服务未开放时会明确报错；可使用 `visible_only: true` 读取首页可见课程，并明确标记不完整。
 - 课程目录和作业列表来自可见 HTML。测验详情可读取已存在的完成情况和成绩，不开始新尝试；日期保留学校页面的原始显示，不擅自套用电脑时区。
-- 支持 PDF、DOCX、HTML 和文本提取。扫描版 PDF 没有 OCR，PPTX、ZIP、视频等仅保存。文件实际响应最大 60 MB，下载过程强制限制，不只信任文件元数据。
+- 支持 PDF、DOCX、HTML 和文本提取。扫描版 PDF 没有 OCR，PPTX、ZIP、视频等仅保存。文件实际响应最大 200 MB，下载过程强制限制，不只信任文件元数据。
 - 批量保存扫描课程可见资源、文件夹、页面里的直接文件链接；不承诺抓取外站、论坛附件或嵌套活动中的所有资料。默认最多 150 个文件。相同内容按 SHA-256 去重，不覆盖同名的不同内容。当前版本每次会请求远端文件确认内容，尚未实现条件请求缓存。
 - 本地课程 HTML 导出是目录快照，正文课件不内嵌。分享给学生使用的 HTML 安装指南是另一份独立文件。
 - MCP 的保存/读取文件工具会写本地磁盘，工具注解明确标记；其余工具声明为读取工具。
@@ -130,6 +130,8 @@ npm run package:xjtlu
 登录完成后，维护者可运行 `node scripts/verify-xjtlu-live.mjs --course-id <课程ID> --resource-id <课件活动ID>`，通过真实 MCP 客户端验证状态、课程、活动、文件下载和文字提取。此脚本会保存一份课件到本地，只打印数量和耗时，不打印 Cookie、成绩或课件正文。
 
 测试使用假 Moodle 服务器和真实 stdio MCP 客户端，涵盖解析、课程分页、Cookie 范围、重定向边界、文件去重、会话失效、客户端配置合并和本地网页接口。浏览器站点检查与新 MCP 真机验证结果应分别记录，不能互相替代。
+
+真机记录（2026-10-18，macOS，当前学年站点 core.xjtlu.edu.cn，用同学账号登录测试，会话放在临时目录、测完删除）：新学年不少课程改为分节单独成页（grid 等格式），课程主页只内嵌第 0 节，其余在 `/course/section.php?id=N`；`moodle_get_course` 现在逐页读取并按活动 id 去重合并，例如一门 grid 课程从 1 个活动变为 6 个，MTH205 读到 7 节 28 个活动。DDL（如作业 Due 日期）能从合并后的课程页读出。`verify-xjtlu-live.mjs --course-id 1164` 经真实 stdio MCP 7/7 通过；`moodle_save_course_files` 保存 MTH206：36 个文件链接中 31 个成功（47 MB），失败的 4 个是超过旧 60 MB 上限的讲义（上限改为 200 MB 后，105 MB 的讲义 16 秒下载完成并提取文字）、1 个是偶发连接失败（现在会自动重试两次）。受限活动会被重定向到 `/course/cms/<id>/restricted`，现在给出明确的「受限」提示。
 
 真机记录（2026-10-17，macOS，Chrome 155，AY25/26 归档站）：MCP 专用窗口登录并保存会话成功；`verify-xjtlu-live.mjs --course-id 5331 --resource-id 84827` 经真实 stdio MCP 7/7 通过（课程列表完整、课程详情、作业/测验、活动、文件列表、PDF 下载 581076 字节并提取文字）。同日经真实 stdio MCP 调用 `moodle_save_course_files` 保存课程 5331：扫描 81 个文件链接，81 个成功、0 个失败，磁盘去重后 76 个文件约 37.5 MB，PDF 文件头全部有效；重复执行不新增文件。设为「嵌入显示」的资源页会先出现 `?embed=1` 的 iframe 地址，下载时取第一个符合白名单的链接。
 

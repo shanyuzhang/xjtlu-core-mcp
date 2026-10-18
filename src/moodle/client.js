@@ -2,12 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { DATA_DIR, secureJson, settings } from './config.js';
-import { MoodleSession, LoginRequired } from './session.js';
+import { MoodleSession, LoginRequired, RestrictedActivity } from './session.js';
 import { parseIdentity, parseCourses, parseCourse, parsePage, sessionKey, safeName } from './parse.js';
 import { extractText, window } from '../text.js';
 
 export const READ_METHODS = new Set(['core_course_get_enrolled_courses_by_timeline_classification']);
-const MAX_BYTES = 60 * 1024 * 1024;
+const MAX_BYTES = 200 * 1024 * 1024;
+const MAX_MB = Math.round(MAX_BYTES / 1024 / 1024);
 const PAGE_PATHS = /^\/(?:my\/(?:courses\.php)?|course\/(?:view|section)\.php|mod\/(?:resource|folder|page|assign|quiz|forum|url)\/view\.php|pluginfile\.php\/[^?#]+|lib\/ajax\/service\.php)$/;
 
 export function allowedUrl(value, base) {
@@ -19,7 +20,7 @@ export function allowedUrl(value, base) {
 }
 
 async function limitedBody(response, maxBytes) {
-  if (Number(response.headers.get('content-length')) > maxBytes) { await response.body?.cancel(); throw new Error('文件超过 60 MB 限制。'); }
+  if (Number(response.headers.get('content-length')) > maxBytes) { await response.body?.cancel(); throw new Error(`文件超过 ${MAX_MB} MB 限制。`); }
   const chunks = []; let size = 0;
   if (!response.body) return Buffer.alloc(0);
   const reader = response.body.getReader();
@@ -27,7 +28,7 @@ async function limitedBody(response, maxBytes) {
     while (true) {
       const { value, done } = await reader.read(); if (done) break;
       size += value.byteLength;
-      if (size > maxBytes) { await reader.cancel(); throw new Error('文件超过 60 MB 限制。'); }
+      if (size > maxBytes) { await reader.cancel(); throw new Error(`文件超过 ${MAX_MB} MB 限制。`); }
       chunks.push(Buffer.from(value));
     }
   } finally { reader.releaseLock(); }
@@ -53,10 +54,17 @@ export class MoodleClient {
     for (let redirect = 0; redirect < 6; redirect++) {
       const cookie = this.session.cookieHeader(url.href);
       let res;
-      try {
-        res = await this.fetch(url, { method, headers: { Cookie: cookie, Accept: '*/*', ...(data ? { 'Content-Type': 'application/json' } : {}) },
-          body: data ? JSON.stringify(data) : undefined, redirect: 'manual', signal: AbortSignal.timeout(45000) });
-      } catch { throw new Error('无法连接学校站点，请检查网络或校园 VPN。'); }
+      // 偶发的连接超时 / IPv4-IPv6 竞速会导致单次请求失败；读取是幂等的，重试一次即可大幅减少漏下载。
+      for (let attempt = 0; ; attempt++) {
+        try {
+          res = await this.fetch(url, { method, headers: { Cookie: cookie, Accept: '*/*', ...(data ? { 'Content-Type': 'application/json' } : {}) },
+            body: data ? JSON.stringify(data) : undefined, redirect: 'manual', signal: AbortSignal.timeout(45000) });
+          break;
+        } catch (e) {
+          if (attempt >= 2) throw new Error('无法连接学校站点，请检查网络或校园 VPN。');
+          await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+        }
+      }
       this.session.updateCookies?.(res, url.href);
       if ([301, 302, 303, 307, 308].includes(res.status)) {
         await res.body?.cancel();
@@ -65,6 +73,10 @@ export class MoodleClient {
         if (next.origin !== this.base) {
           if (['uim.xjtlu.edu.cn', 'sso.xjtlu.edu.cn'].includes(next.hostname)) return this.expired(value, { method, data, renew });
           throw new Error('资源跳转到校外或其他站点，此版本只下载当前学校站点的文件。');
+        }
+        // 新版站点把受限活动重定向到 /course/cms/<id>/restricted；给出明确提示而非通用白名单错误。
+        if (/\/restricted\/?$/.test(next.pathname) || next.pathname.startsWith('/course/cms/')) {
+          throw new RestrictedActivity();
         }
         url = allowedUrl(next.href, this.base);
         continue;
@@ -127,7 +139,29 @@ export class MoodleClient {
     return { courses, complete: false, source: 'visible-page', note: '仅包含当前 HTML 中可见的课程，不代表全部已选课程。' };
   }
 
-  async course(id) { return { id: String(id), ...parseCourse(await this.html(`/course/view.php?id=${numericId(id)}`), this.base) }; }
+  async course(id) {
+    const main = parseCourse(await this.html(`/course/view.php?id=${numericId(id)}`), this.base);
+    const links = main.sectionLinks || [];
+    if (!links.length) return { id: String(id), name: main.name, sections: main.sections, items: main.items };
+    // 分页课程：逐个抓取 section.php 页面，按活动 id 去重合并，同名分节合并为一节。
+    const seen = new Set();
+    const byName = new Map();
+    const order = [];
+    const add = (section) => {
+      let target = byName.get(section.name);
+      if (!target) { target = { name: section.name, items: [] }; byName.set(section.name, target); order.push(target); }
+      for (const it of section.items) if (!seen.has(it.id)) { seen.add(it.id); target.items.push(it); }
+    };
+    main.sections.forEach(add);
+    let truncated = false;
+    for (const link of links.slice(0, 60)) {
+      try { parseCourse(await this.html(link), this.base).sections.forEach(add); }
+      catch { /* 单节读取失败不影响其余分节 */ }
+    }
+    if (links.length > 60) truncated = true;
+    const sections = order.filter((s) => s.items.length || main.sections.some((m) => m.name === s.name));
+    return { id: String(id), name: main.name, sections, items: sections.flatMap((s) => s.items), ...(truncated ? { truncated: true, note: '分节数量超过上限，部分内容未读取。' } : {}) };
+  }
 
   async activity(id, type = 'assign') {
     if (!['assign', 'quiz', 'forum', 'page', 'folder', 'resource', 'url'].includes(type)) throw new Error('不支持的活动类型。');

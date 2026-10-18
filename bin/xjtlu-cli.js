@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline/promises';
 import { parseArgs } from 'node:util';
-import { settings, configure, normalizeOrigin, DATA_DIR } from '../src/moodle/config.js';
+import { settings, configure, normalizeOrigin, readConfig, DATA_DIR, DEFAULT_URL, ARCHIVE_URL } from '../src/moodle/config.js';
 import { MoodleClient } from '../src/moodle/client.js';
 import { launchConfig, stableInstall, targets, installTarget } from '../src/moodle/setup.js';
 
@@ -22,13 +22,16 @@ const ask = async (text, fallback = '') => {
 };
 
 try {
-  if (command === 'help') log(`西浦 Learning Mall MCP\n\n  setup         连接学校账号并配置 AI 客户端\n  login         在独立 Chrome / Edge 窗口登录\n  status        检查登录状态\n  serve         启动 MCP（默认，供 AI 客户端调用）\n  web           启动本地管理页面 http://127.0.0.1:3891\n  config        输出手动 MCP 配置\n\n可选 --url https://core-archive25-26.xjtlu.edu.cn --downloads <目录> --port 3891\n数据目录：${DATA_DIR}`);
+  if (command === 'help') log(`西浦 Learning Mall MCP\n\n  setup         连接学校账号并配置 AI 客户端\n  login         在独立 Chrome / Edge 窗口登录\n  status        检查登录状态\n  serve         启动 MCP（默认，供 AI 客户端调用）\n  web           启动本地管理页面 http://127.0.0.1:3891\n  config        输出手动 MCP 配置\n\n可选 --url https://core.xjtlu.edu.cn（25-26 归档站：--url https://core-archive25-26.xjtlu.edu.cn）--downloads <目录> --port 3891\n数据目录：${DATA_DIR}`);
   else if (command === 'setup') {
     // 默认快速模式（npx 与一行安装一致）；--custom 才逐项询问学校地址和课件目录。
     if (!values.custom) values.quick = true;
     if (!process.stdin.isTTY && !values.yes) throw new Error('非交互安装需要 --yes 和明确的 --clients；日常使用请在终端运行 setup。');
     // --quick（一行安装命令使用）：沿用已保存或默认的学校地址和课件目录，不再提问。
-    const base = normalizeOrigin(values.url || (values.quick ? settings().base : await ask('学校地址（AY25/26 归档站）', settings().base)));
+    // 旧版默认保存的是 25-26 归档站；快速模式重新安装时切到当前学年站点（需要归档站请用 --url）。
+    const saved = readConfig().base;
+    const quickBase = saved && saved !== ARCHIVE_URL ? settings().base : (process.env.XJTLU_URL || DEFAULT_URL);
+    const base = normalizeOrigin(values.url || (values.quick ? quickBase : await ask('学校地址（当前学年站点）', settings().base)));
     const downloads = path.resolve(values.downloads || (values.quick ? settings().downloads : await ask('课件保存目录', settings().downloads)));
     configure({ base, downloads });
     fs.mkdirSync(downloads, { recursive: true });

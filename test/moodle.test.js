@@ -36,6 +36,15 @@ const fixture = `${identity}<h1>AI &amp; Maths</h1><main id="region-main"><ul><l
 <li id="module-11" class="activity modtype_folder"><a href="/mod/folder/view.php?id=11">Lab Folder</a></li>
 <li id="module-12" class="activity modtype_quiz"><a href="/mod/quiz/view.php?id=12">CW1 Quiz</a><div class="activity-dates">Closed: 31 March 2026, 23:59</div></li>
 <li id="module-13" class="activity modtype_quiz"><div class="activityname">Restricted Quiz</div><p>Group membership required</p></li></ul></li></ul></main>`;
+// 当前学年站点的分页课程（grid 格式）：主页只内嵌第 0 节，其余各节在 /course/section.php?id=N。
+const gridMain = `${identity}<h1>Grid Course</h1><main id="region-main"><ul><li id="section-0"><h3 class="sectionname">General</h3><ul>
+<li id="module-50" class="activity modtype_forum"><a href="/mod/forum/view.php?id=50">Announcements</a></li></ul></li></ul>
+<a class="grid-section-inner" href="/course/section.php?id=501">Week 1</a><a class="grid-section-inner" href="/course/section.php?id=502">Week 2</a></main>`;
+const gridSection501 = `${identity}<h1>Grid Course</h1><main id="region-main"><ul><li id="section-1" data-sectionname="Week 1"><ul>
+<li id="module-50" class="activity modtype_forum"><a href="/mod/forum/view.php?id=50">Announcements</a></li>
+<li id="module-51" class="activity modtype_resource"><a href="/mod/resource/view.php?id=51">Week 1 slides</a></li></ul></li></ul></main>`;
+const gridSection502 = `${identity}<h1>Grid Course</h1><main id="region-main"><ul><li id="section-2" data-sectionname="Week 2"><ul>
+<li id="module-52" class="activity modtype_assign"><a href="/mod/assign/view.php?id=52">Coursework 1</a><div class="activity-dates">Due: Friday, 30 October 2026, 17:00</div></li></ul></li></ul></main>`;
 let server; let base; const requests = [];
 before(async () => {
   server = http.createServer(async (req, res) => {
@@ -52,6 +61,10 @@ before(async () => {
       const offset = payload.args.offset;
       return send(JSON.stringify([{ error: false, data: { courses: [{ id: offset ? 2 : 1, fullname: offset ? 'Finance' : 'AI & Maths' }], nextoffset: offset ? 0 : 100 } }]), 'application/json');
     }
+    if (u.pathname === '/course/view.php' && u.searchParams.get('id') === '5') return send(gridMain);
+    if (u.pathname === '/course/section.php' && u.searchParams.get('id') === '501') return send(gridSection501);
+    if (u.pathname === '/course/section.php' && u.searchParams.get('id') === '502') return send(gridSection502);
+    if (u.pathname === '/mod/assign/view.php' && u.searchParams.get('id') === '77') { res.writeHead(303, { Location: '/course/cms/77/restricted' }); res.end(); return; }
     if (u.pathname === '/course/view.php') return send(fixture);
     if (u.pathname === '/mod/resource/view.php' && u.searchParams.get('id') === '99') { res.writeHead(302, { Location: 'https://evil.example/steal' }); res.end(); return; }
     if (u.pathname === '/mod/resource/view.php' && u.searchParams.get('id') === '97') return send('<main id="region-main"><iframe src="/pluginfile.php/125/mod_resource/content/0/lecture.pdf?embed=1"></iframe><a href="/pluginfile.php/125/mod_resource/content/0/lecture.pdf">lecture.pdf</a></main>');
@@ -116,6 +129,38 @@ test('embedded resource page downloads the plain file link instead of the ?embed
   assert.equal(file.contentType, 'application/pdf'); assert.ok(fs.existsSync(file.path));
 });
 
+test('paginated (grid) courses merge every section page, without duplicates, so DDL and files appear', async () => {
+  const course = await make().course('5');
+  assert.deepEqual(course.items.map((it) => it.id), ['50', '51', '52']);
+  assert.deepEqual(course.sections.map((sec) => sec.name), ['General', 'Week 1', 'Week 2']);
+  const ddl = await make().assignments('5');
+  assert.equal(ddl.items.length, 1); assert.match(ddl.items[0].dates, /30 October 2026/);
+});
+
+test('restricted activities report a clear message, and a dropped connection is retried', async () => {
+  await assert.rejects(make().activity('77', 'assign'), (e) => e.code === 'RESTRICTED' && /受限/.test(e.message));
+  const c = make(); const real = c.fetch; let calls = 0;
+  c.fetch = async (...args) => { calls++; if (calls === 1) throw new TypeError('fetch failed'); return real(...args); };
+  assert.equal((await c.status()).connected, true); assert.equal(calls, 2);
+  const down = make(); down.fetch = async () => { throw new TypeError('fetch failed'); };
+  await assert.rejects(down.status(), /无法连接/);
+});
+
+test('re-running setup moves the old 25-26 archive default to the current-year site, but keeps a custom site', () => {
+  const cli = fileURLToPath(new URL('../bin/xjtlu-cli.js', import.meta.url));
+  const run = (saved, extra = []) => {
+    const dir = fs.mkdtempSync(path.join(home, 'setup-'));
+    fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify({ base: saved }));
+    const env = { ...process.env, XJTLU_MCP_HOME: dir, XJTLU_MCP_DOWNLOADS: path.join(dir, 'files') }; delete env.XJTLU_URL;
+    const r = spawnSync(process.execPath, [cli, 'setup', '--no-install', '--no-login', '--yes', '--clients', 'none', ...extra], { env, encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+    return JSON.parse(fs.readFileSync(path.join(dir, 'config.json'), 'utf8')).base;
+  };
+  assert.equal(run('https://core-archive25-26.xjtlu.edu.cn'), 'https://core.xjtlu.edu.cn');
+  assert.equal(run('https://moodle.example.edu'), 'https://moodle.example.edu');
+  assert.equal(run('https://core.xjtlu.edu.cn', ['--url', 'https://core-archive25-26.xjtlu.edu.cn']), 'https://core-archive25-26.xjtlu.edu.cn');
+});
+
 test('same-name different content is not overwritten', async () => {
   const c = make(); c.fetch = async () => new Response('A different lecture', { headers: { 'Content-Type': 'text/plain' } });
   const prior = await make().readFile(`${base}/pluginfile.php/2/notes.txt`, '1');
@@ -130,8 +175,8 @@ test('a real PDF response downloads and yields its page text', async () => {
 });
 
 test('oversized streamed responses are cancelled and auth redirect never leaks cookies', async () => {
-  const c = make(); c.fetch = async () => new Response('x', { headers: { 'Content-Length': String(70 * 1024 * 1024) } });
-  await assert.rejects(c.request('/my/'), /60 MB/);
+  const c = make(); c.fetch = async () => new Response('x', { headers: { 'Content-Length': String(250 * 1024 * 1024) } });
+  await assert.rejects(c.request('/my/'), /200 MB/);
   const seen = []; const external = make(); external.fetch = async (u) => { seen.push(new URL(u).origin); return new Response('', { status: 302, headers: { Location: 'https://evil.example/' } }); };
   await assert.rejects(external.request('/my/'), /校外/); assert.deepEqual(seen, [base]);
   await assert.rejects(new MoodleClient({ base, session: { cookieHeader: () => '' } }).status(), /登录/);
