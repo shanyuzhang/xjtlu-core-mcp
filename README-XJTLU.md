@@ -34,9 +34,15 @@ Windows 在 PowerShell 中运行 `irm https://shanyuzhang.com/xjtlu-core-mcp/ins
 
 - 列出我的西浦课程，包括归档学年。
 - 看一下 MTH129 的课程目录，列出讲义和实验资料。
-- 读取这门课的作业和测验截止时间，不开始任何测验。
+- 我最近有哪些 DDL？（会查 Moodle 时间线，再读各门课的 Module Handbook 和作业说明）
 - 阅读 Lecture 1，并总结前五页。
 - 将这门课的可见课件保存到我的本地文件夹。
+
+### AI 使用约定
+
+MCP 服务器在连接时向 AI 客户端提供使用说明（`src/moodle/server.js` 的 `INSTRUCTIONS`）：需求不明确时先问学生是要查 DDL、下载课件还是读讲义；下载前确认是哪门课、要整门还是部分；DDL 先查 `moodle_upcoming_deadlines`（Moodle 时间线，一次覆盖所有课程），再对相关课程用 `moodle_find_deadlines` 读取 Module Handbook、Coursework / Assessment Specification 等文件，摘出写着日期或周次的句子并注明来源，来源不一致时标出；结果直接在对话里用列表或表格给出，不生成 Excel，最后可以问一句是否要做成 HTML。
+
+`moodle_find_deadlines` 只读不存盘：按文件名（handbook、specification、brief、coursework、assessment、schedule 等）挑出最多 4 份（可调到 8 份）文件读取文字，摘录同时出现「写明的日期或第 N 周」和「截止、提交、作业、考试」等字样的句子；PDF 表格被拆成短行时，会往上找表头把日期行拼在一起。摘录可能不完整，以学校文件原文为准。
 
 ## 开发目录运行
 
@@ -97,13 +103,14 @@ args = ["/absolute/path/to/bin/xjtlu-cli.js", "serve"]
 
 优先使用保存的 Cookie。站点跳转回登录页时，会用独立浏览器配置无界面检查一次 Moodle 会话（不进入学校认证中心，以免 profile 被网关标记）；Moodle 会话已失效时需要运行 `login` 重新登录。不会自动完成验证码。未实际测量西浦会话的最长有效时长。
 
-工具不提供提交作业、开始测验、发帖、修改成绩或任意 API 调用。课程列表只允许一个已知的只读 Moodle AJAX POST 方法；其他数据读取走已限制路径的 GET。正常访问页面可能产生学校自身的访问日志或自动完成标记，与手动浏览相同，不能承诺完全没有服务器状态变化。
+工具不提供提交作业、开始测验、发帖、修改成绩或任意 API 调用。只允许两个已知的只读 Moodle AJAX POST 方法（课程列表、DDL 时间线）；其他数据读取走已限制路径的 GET。正常访问页面可能产生学校自身的访问日志或自动完成标记，与手动浏览相同，不能承诺完全没有服务器状态变化。
 
 课件和 Cookie 留在本地，但 MCP 返回的课程文字会由你选择的 AI 客户端处理。使用云端 AI 时，这些文字可能发送到对应模型服务。请遵守课程的 AI 使用要求，不公开传播课件。
 
 ## 已知范围
 
 - `moodle_list_courses` 优先使用 Moodle 课程 AJAX 接口，最多分页 30 次，每次 100 条。服务未开放时会明确报错；可使用 `visible_only: true` 读取首页可见课程，并明确标记不完整。
+- DDL 时间线用 Moodle 首页「时间线」同款的只读 AJAX 方法 `core_calendar_get_action_events_by_timesort`（过去 7 天到未来 60 天，可调到 180 天），时间换算为北京时间；只包含 Moodle 登记了截止时间的活动。
 - 课程目录和作业列表来自可见 HTML。测验详情可读取已存在的完成情况和成绩，不开始新尝试；日期保留学校页面的原始显示，不擅自套用电脑时区。
 - 支持 PDF、DOCX、HTML 和文本提取。扫描版 PDF 没有 OCR，PPTX、ZIP、视频等仅保存。文件实际响应最大 200 MB，下载过程强制限制，不只信任文件元数据。
 - 批量保存扫描课程可见资源、文件夹、页面里的直接文件链接；不承诺抓取外站、论坛附件或嵌套活动中的所有资料。默认最多 150 个文件。相同内容按 SHA-256 去重，不覆盖同名的不同内容。当前版本每次会请求远端文件确认内容，尚未实现条件请求缓存。

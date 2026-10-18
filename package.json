@@ -1,6 +1,6 @@
 {
   "name": "xjtlu-core-mcp",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "西浦课程助手：让 Codex、Claude Code 等 AI 读取 XJTLU Learning Mall（Moodle）的课程、DDL 和课件。只读，数据留在本机。Let your AI read your XJTLU Learning Mall modules, deadlines and lecture files.",
   "main": "src/server.js",
   "bin": {

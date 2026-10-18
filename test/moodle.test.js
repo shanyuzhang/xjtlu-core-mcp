@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { MoodleClient, allowedUrl } from '../src/moodle/client.js';
+import { MoodleClient, allowedUrl, deadlineLines, docScore } from '../src/moodle/client.js';
 import { MoodleSession, loginResponseHint, signedInResponse } from '../src/moodle/session.js';
 import { EventEmitter } from 'node:events';
 import { parseCourse, parseIdentity, parsePage } from '../src/moodle/parse.js';
@@ -56,12 +56,26 @@ before(async () => {
     if (u.pathname === '/my/courses.php') return send(`${identity}<script>M.cfg={"sesskey":"test-only-key"}</script>`);
     if (u.pathname === '/lib/ajax/service.php') {
       let data = ''; for await (const c of req) data += c;
-      const payload = JSON.parse(data)[0]; assert.equal(payload.methodname, 'core_course_get_enrolled_courses_by_timeline_classification');
+      const payload = JSON.parse(data)[0];
+      if (payload.methodname === 'core_calendar_get_action_events_by_timesort') {
+        assert.ok(payload.args.timesortto > payload.args.timesortfrom);
+        return send(JSON.stringify([{ error: false, data: { events: [{ id: 9, name: 'Coursework 1 is due', activityname: 'Coursework 1', modulename: 'assign', timesort: 1793350800, overdue: false,
+          course: { id: 5, fullname: 'Grid Course' }, action: { name: 'Add submission' }, url: '/mod/assign/view.php?id=52' }] } }]), 'application/json');
+      }
+      assert.equal(payload.methodname, 'core_course_get_enrolled_courses_by_timeline_classification');
       assert.equal(payload.args.classification, 'all');
       const offset = payload.args.offset;
       return send(JSON.stringify([{ error: false, data: { courses: [{ id: offset ? 2 : 1, fullname: offset ? 'Finance' : 'AI & Maths' }], nextoffset: offset ? 0 : 100 } }]), 'application/json');
     }
     if (u.pathname === '/course/view.php' && u.searchParams.get('id') === '5') return send(gridMain);
+    if (u.pathname === '/course/view.php' && u.searchParams.get('id') === '6') return send(`${identity}<h1>Stats</h1><main id="region-main"><ul><li id="section-1" data-sectionname="Week 1"><ul>
+<li id="module-61" class="activity modtype_resource"><a href="/mod/resource/view.php?id=61">Module Handbook</a></li>
+<li id="module-62" class="activity modtype_folder"><a href="/mod/folder/view.php?id=62">Coursework</a></li>
+<li id="module-63" class="activity modtype_resource"><a href="/mod/resource/view.php?id=63">Lecture 1 slides</a></li></ul></li></ul></main>`);
+    if (u.pathname === '/mod/resource/view.php' && u.searchParams.get('id') === '61') { res.writeHead(303, { Location: '/pluginfile.php/161/mod_resource/content/1/handbook.txt' }); res.end(); return; }
+    if (u.pathname === '/mod/folder/view.php' && u.searchParams.get('id') === '62') return send('<main id="region-main"><a href="/pluginfile.php/162/mod_folder/content/0/CW2%20specification.txt">CW2 specification.txt</a><a href="/pluginfile.php/162/mod_folder/content/0/data.csv">data.csv</a></main>');
+    if (u.pathname.endsWith('/handbook.txt')) return send('Assessment Details\nAssessment Task Weighting Release Date Due Date Coursework 2 15% 27/Nov/2026 11/Dec/2026 17:00\nWe meet in room 1/2.', 'text/plain');
+    if (u.pathname.endsWith('/CW2%20specification.txt')) return send('Important Dates\nEvent Open date Due date\nReport\nsubmission\nDecember 7, 2026 (Monday) 0:00\nAM\nDecember 13, 2026 (Sunday) 23:59\nPM\nMarking components', 'text/plain');
     if (u.pathname === '/course/section.php' && u.searchParams.get('id') === '501') return send(gridSection501);
     if (u.pathname === '/course/section.php' && u.searchParams.get('id') === '502') return send(gridSection502);
     if (u.pathname === '/mod/assign/view.php' && u.searchParams.get('id') === '77') { res.writeHead(303, { Location: '/course/cms/77/restricted' }); res.end(); return; }
@@ -159,6 +173,33 @@ test('re-running setup moves the old 25-26 archive default to the current-year s
   assert.equal(run('https://core-archive25-26.xjtlu.edu.cn'), 'https://core.xjtlu.edu.cn');
   assert.equal(run('https://moodle.example.edu'), 'https://moodle.example.edu');
   assert.equal(run('https://core.xjtlu.edu.cn', ['--url', 'https://core-archive25-26.xjtlu.edu.cn']), 'https://core-archive25-26.xjtlu.edu.cn');
+});
+
+test('upcoming deadlines come from the Moodle timeline in Beijing time', async () => {
+  const r = await make().upcoming(30);
+  assert.equal(r.items.length, 1); assert.equal(r.items[0].name, 'Coursework 1'); assert.equal(r.items[0].action, 'Add submission');
+  assert.match(r.items[0].due, /2026\/10\/30.*17:00/); assert.match(r.note, /moodle_find_deadlines/);
+});
+
+test('course deadline search reads handbook and specification files without saving them', async () => {
+  const before = fs.existsSync(path.join(home, 'downloads', 'course-6'));
+  const r = await make().findDeadlines('6');
+  assert.equal(before, false); assert.equal(fs.existsSync(path.join(home, 'downloads', 'course-6')), false);
+  assert.deepEqual(r.documents.map((d) => d.name).sort(), ['CW2 specification.txt', 'Module Handbook']);
+  assert.ok(!r.documents.some((d) => /Lecture|data\.csv/.test(d.name)));
+  const all = r.documents.flatMap((d) => d.snippets).join('\n');
+  assert.match(all, /11\/Dec\/2026 17:00/); assert.match(all, /December 13, 2026 \(Sunday\) 23:59/); assert.doesNotMatch(all, /room 1\/2/);
+});
+
+test('deadline extraction handles flattened PDF tables, long table rows and ignores date-free noise', () => {
+  const table = deadlineLines('Important Dates\nEvent Open date Due date\nReport\nsubmission\nDecember 7, 2026 (Monday) 0:00\nAM\nDecember 13, 2026 (Sunday) 23:59\nPM\nMarking components');
+  assert.equal(table.length, 1); assert.match(table[0], /^Important Dates .*December 13, 2026 \(Sunday\) 23:59 \/ PM$/);
+  const long = deadlineLines(`${'Intro text. '.repeat(40)}Assessment Task Due Date Coursework 1 15% 16/Oct/2026 30/Oct/2026 17:00 ${'AI rules apply. '.repeat(30)}`);
+  assert.equal(long.length, 1); assert.match(long[0], /30\/Oct\/2026 17:00/); assert.ok(long[0].length <= 262);
+  assert.deepEqual(deadlineLines('Chapter 3 covers 1/2 of it.\nWe met on 3 March.\nThe exam is important.'), []);
+  assert.match(deadlineLines('Class test 2: Wednesday night, Week 13')[0], /Week 13/);
+  assert.ok(docScore('MTH205 Module Handbook') > 0 && docScore('Coursework 1 brief') > docScore('Group Coursework')); assert.equal(docScore('Lecture 3 slides'), 0);
+  assert.deepEqual(deadlineLines('Due Date\nWe meet in room 1/2.\nweek 3 recap'), []);
 });
 
 test('same-name different content is not overwritten', async () => {
@@ -297,7 +338,9 @@ test('real stdio MCP advertises tools and reports missing login without starting
   const mcp = new Client({ name: 'xjtlu-test', version: '1' });
   await mcp.connect(new StdioClientTransport({ command: process.execPath, args: [cli, 'serve'], env: { ...process.env, XJTLU_MCP_HOME: path.join(home, 'empty'), XJTLU_URL: 'https://core-archive25-26.xjtlu.edu.cn' } }));
   try {
-    const { tools } = await mcp.listTools(); assert.equal(tools.length, 9);
+    const { tools } = await mcp.listTools(); assert.equal(tools.length, 11);
+    assert.match(mcp.getInstructions(), /先问清需求/); assert.match(mcp.getInstructions(), /moodle_find_deadlines/); assert.match(mcp.getInstructions(), /不要生成 Excel/);
+    assert.equal(mcp.getServerVersion().version, JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version);
     assert.equal(tools.find((t) => t.name === 'moodle_get_course').annotations.readOnlyHint, true);
     assert.equal(tools.find((t) => t.name === 'moodle_save_course_files').annotations.readOnlyHint, false);
     const result = await mcp.callTool({ name: 'moodle_whoami', arguments: {} }); assert.equal(result.isError, true); assert.match(result.content[0].text, /登录/);

@@ -339,22 +339,22 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
       <div class="sec-head">
         <p class="eyebrow" data-en="Once installed">装好以后</p>
         <h2 data-en="Ask your AI like you’d ask a classmate">像问同学一样问 AI</h2>
-        <p data-en="Your AI looks things up on Learning Mall by itself. It sees exactly what you’d see in the browser after signing in, nothing more.">AI 会自己去 Learning Mall 找答案。它能看到的，就是你登录后在网页上本来就能看到的内容。</p>
+        <p data-en="Your AI looks things up on Learning Mall by itself, and sees only what you’d see in the browser after signing in. Not sure what to ask? It will first check whether you want deadlines, course files or help with a lecture.">AI 会自己去 Learning Mall 找答案，能看到的就是你登录后在网页上本来就能看到的内容。不知道从哪问起也没关系，它会先问你是要查 DDL、下载课件，还是读讲义。</p>
       </div>
 
       <div class="demos">
         <article class="card chat" aria-label="示例：查询 DDL" data-aria-en="Example: deadlines">
           <span class="chat-label" data-en="Example · deadlines">示例 · 查 DDL</span>
           <div class="q" data-en="What deadlines do I have?">目前有哪些 DDL？</div>
-          <div class="thinking" data-en="&lt;svg class=&quot;ico&quot;&gt;&lt;use href=&quot;#i-spark&quot;/&gt;&lt;/svg&gt;Checking assignments and quizzes in each of your modules…"><svg class="ico"><use href="#i-spark"/></svg>正在查看你每门课的作业和测验…</div>
+          <div class="thinking" data-en="&lt;svg class=&quot;ico&quot;&gt;&lt;use href=&quot;#i-spark&quot;/&gt;&lt;/svg&gt;Checking the Moodle timeline, then each module’s handbook and coursework briefs…"><svg class="ico"><use href="#i-spark"/></svg>正在看 Moodle 时间线，再翻每门课的 Module Handbook 和作业说明…</div>
           <div class="a">
-            <p data-en="Here they are, soonest first:">按截止时间排好了：</p>
+            <p data-en="Here they are, soonest first, with where each one came from:">按截止时间排好了，括号里是来源：</p>
             <ul>
-              <li data-en="&lt;span class=&quot;due&quot;&gt;Fri 23:59&lt;/span&gt;　MTH129 · Coursework 1"><span class="due">周五 23:59</span>　MTH129 · Coursework 1</li>
-              <li data-en="&lt;span class=&quot;due&quot;&gt;Next Mon 10:00&lt;/span&gt;　Quiz 3 opens, 40-minute time limit"><span class="due">下周一 10:00</span>　Quiz 3 开放，限时 40 分钟</li>
-              <li data-en="&lt;span class=&quot;due&quot;&gt;Next Wed 17:00&lt;/span&gt;　Lab Report 2, submit as PDF"><span class="due">下周三 17:00</span>　Lab Report 2，要交 PDF</li>
+              <li data-en="&lt;span class=&quot;due&quot;&gt;Fri 30 Oct 17:00&lt;/span&gt;　MTH205 · Coursework 1 (Moodle, not submitted yet)"><span class="due">10/30 周五 17:00</span>　MTH205 · Coursework 1（Moodle，还没提交）</li>
+              <li data-en="&lt;span class=&quot;due&quot;&gt;15 Nov 20:00&lt;/span&gt;　MTH202 · Empirical project (handbook; the brief says 16 Nov 18:00, so check with your lecturer)"><span class="due">11/15 20:00</span>　MTH202 · Empirical project（Handbook；作业说明写的是 11/16 18:00，两份不一致，建议问老师）</li>
+              <li data-en="&lt;span class=&quot;due&quot;&gt;11 Dec 17:00&lt;/span&gt;　MTH205 · Coursework 2 (only in the handbook, not on Moodle yet)"><span class="due">12/11 17:00</span>　MTH205 · Coursework 2（只写在 Handbook 里，Moodle 上还没有）</li>
             </ul>
-            <p data-en="Want me to pull together the Coursework 1 questions and marking criteria?">要我把 Coursework 1 的题目和评分要求整理出来吗？</p>
+            <p data-en="Want me to turn this into an HTML page?">需要整理成 HTML 页面吗？</p>
           </div>
         </article>
 
@@ -377,7 +377,7 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
           </div>
         </article>
       </div>
-      <p class="note" data-en="The “save a module” numbers come from a real run; the deadlines example is illustrative, with module names and dates changed.">「存课件」的数字来自一次真实使用；DDL 那段是示意，课程和日期已替换。</p>
+      <p class="note" data-en="Both examples are based on real runs; the save numbers come from one module.">两个示例都根据真实使用整理；存课件的数字来自一门课。</p>
 
       <div class="more">
         <button class="prompt" type="button" data-prompt="列出我所有的西浦课程，包括往年的课程。" data-prompt-en="List all my XJTLU modules, including past years." data-en="&lt;b&gt;List all my modules&lt;/b&gt;&lt;span&gt;Including past years&lt;/span&gt;&lt;i&gt;Click to copy&lt;/i&gt;"><b>列出我的所有课程</b><span>包括往年的课程</span><i>点击复制</i></button>
@@ -441,7 +441,7 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
         <details><summary data-en="What can it do, and what can’t it do?">它能做什么，不能做什么？</summary><div data-en="&lt;p&gt;It can look up modules, assignment and quiz dates and requirements, read lecture PDFs and Word files, and save a whole module’s files to your computer. It can’t read text from scanned (image-only) PDFs, files over 200 MB are skipped, and materials on external websites aren’t downloaded.&lt;/p&gt;"><p>能查课程、作业和测验的时间与要求，能读讲义 PDF、Word，能把整门课的资料存到电脑。扫描版 PDF（图片）读不出文字；单个文件最大 200 MB；外部网站上的资料不会下载。</p></div></details>
         <details><summary data-en="Can I share this page with classmates?">可以把这个网页发给同学吗？</summary><div data-en="&lt;p&gt;Yes. The page holds nobody’s account details; everyone signs in with their own XJTLU account. But don’t send anyone the &lt;code&gt;.xjtlu-session-mcp&lt;/code&gt; folder on your computer: it holds your sign-in.&lt;/p&gt;"><p>可以。网页里没有任何人的账号信息，同学用自己的学校账号登录。但不要把你电脑上的 <code>.xjtlu-session-mcp</code> 文件夹发给别人，那里有你的登录状态。</p></div></details>
         <details><summary data-en="How do I uninstall it?">怎么卸载？</summary><div data-en="&lt;p&gt;Delete the &lt;code&gt;.xjtlu-session-mcp&lt;/code&gt; folder in your home folder. Your AI app’s settings will also have a connection called &lt;code&gt;xjtlu-core&lt;/code&gt; that you can remove. Downloaded files are in “Documents / XJTLU Core”; keep them if you like.&lt;/p&gt;"><p>删除用户目录下的 <code>.xjtlu-session-mcp</code> 文件夹即可；AI 应用的设置里会多一个叫 <code>xjtlu-core</code> 的连接，也可以一并删掉。下载的课件在「文稿 / XJTLU Core」，想留就留着。</p></div></details>
-        <details><summary data-en="For the technically minded">给懂技术的同学</summary><div data-en="&lt;p&gt;This is a local stdio MCP server with 9 read-only tools (modules, assignments/quizzes, activities, file lists, reading files, saving a module, exporting an index, and more). The source is on &lt;a href=&quot;https://github.com/shanyuzhang/xjtlu-core-mcp&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;GitHub&lt;/a&gt;. The installer puts Node.js (official binaries, SHA-256 checked) and the app in &lt;code&gt;~/.xjtlu-session-mcp&lt;/code&gt;, then updates the AI app configs you agree to, keeping backups. The sign-in window is a regular Chrome / Edge that is not under automation control. Tested on macOS; the Windows script follows the same steps but hasn’t been tested on a real machine yet.&lt;/p&gt;&lt;p&gt;Bundle SHA-256&lt;br&gt;&lt;span class=&quot;hash&quot;&gt;__BUNDLE_SHA256__&lt;/span&gt;&lt;br&gt;Built __BUILD_DATE__ · __FILE_COUNT__ files&lt;/p&gt;"><p>这是一个本地 stdio MCP 服务器，共 9 个只读工具（课程、作业/测验、活动、文件列表、读文件、批量保存、导出目录等），源码在 <a href="https://github.com/shanyuzhang/xjtlu-core-mcp" target="_blank" rel="noreferrer">GitHub</a>。安装命令会把 Node.js（官方二进制包，校验 SHA-256）和程序装进 <code>~/.xjtlu-session-mcp</code>，再修改你同意的 AI 客户端配置，并保留备份。登录窗口是不受自动化控制的普通 Chrome / Edge。目前在 macOS 上实测通过；Windows 脚本按同样流程编写，尚未真机测试。</p><p>工具包 SHA-256<br><span class="hash">__BUNDLE_SHA256__</span><br>构建于 __BUILD_DATE__ · __FILE_COUNT__ 个文件</p></div></details>
+        <details><summary data-en="For the technically minded">给懂技术的同学</summary><div data-en="&lt;p&gt;This is a local stdio MCP server with 11 tools (modules, a deadline timeline, per-module deadline search in handbooks and coursework briefs, assignments/quizzes, activities, file lists, reading files, saving a module, exporting an index, and more); everything except saving files is read-only. The source is on &lt;a href=&quot;https://github.com/shanyuzhang/xjtlu-core-mcp&quot; target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;GitHub&lt;/a&gt;. The installer puts Node.js (official binaries, SHA-256 checked) and the app in &lt;code&gt;~/.xjtlu-session-mcp&lt;/code&gt;, then updates the AI app configs you agree to, keeping backups. The sign-in window is a regular Chrome / Edge that is not under automation control. Tested on macOS; the Windows script follows the same steps but hasn’t been tested on a real machine yet.&lt;/p&gt;&lt;p&gt;Bundle SHA-256&lt;br&gt;&lt;span class=&quot;hash&quot;&gt;__BUNDLE_SHA256__&lt;/span&gt;&lt;br&gt;Built __BUILD_DATE__ · __FILE_COUNT__ files&lt;/p&gt;"><p>这是一个本地 stdio MCP 服务器，共 11 个工具（课程、DDL 时间线、按课程从 handbook 和作业说明里找 DDL、作业/测验、活动、文件列表、读文件、批量保存、导出目录等），除保存文件外都只读，源码在 <a href="https://github.com/shanyuzhang/xjtlu-core-mcp" target="_blank" rel="noreferrer">GitHub</a>。安装命令会把 Node.js（官方二进制包，校验 SHA-256）和程序装进 <code>~/.xjtlu-session-mcp</code>，再修改你同意的 AI 客户端配置，并保留备份。登录窗口是不受自动化控制的普通 Chrome / Edge。目前在 macOS 上实测通过；Windows 脚本按同样流程编写，尚未真机测试。</p><p>工具包 SHA-256<br><span class="hash">__BUNDLE_SHA256__</span><br>构建于 __BUILD_DATE__ · __FILE_COUNT__ 个文件</p></div></details>
       </div>
     </div>
   </section>

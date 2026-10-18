@@ -33,6 +33,10 @@ try {
   if (!courseId) throw new Error('此账号没有可测试的课程。');
   const course = await check('moodle_get_course', { course_id: courseId });
   console.log(`Sections: ${course.sections.length}, activities: ${course.items.length}`);
+  const upcoming = await check('moodle_upcoming_deadlines');
+  console.log(`Timeline deadlines: ${upcoming.items.length}`);
+  const found = await check('moodle_find_deadlines', { course_id: courseId });
+  console.log(`Dated activities: ${found.activities_with_dates.length}, documents read: ${found.documents.length}, snippets: ${found.documents.reduce((n, d) => n + d.snippets.length, 0)}`);
   const assignments = await check('moodle_list_assignments', { course_id: courseId });
   console.log(`Assignments/quizzes: ${assignments.items.length}`);
   const activity = assignments.items.find((x) => x.available && ['quiz', 'assign'].includes(x.type));

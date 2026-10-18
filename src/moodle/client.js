@@ -6,7 +6,7 @@ import { MoodleSession, LoginRequired, RestrictedActivity } from './session.js';
 import { parseIdentity, parseCourses, parseCourse, parsePage, sessionKey, safeName } from './parse.js';
 import { extractText, window } from '../text.js';
 
-export const READ_METHODS = new Set(['core_course_get_enrolled_courses_by_timeline_classification']);
+export const READ_METHODS = new Set(['core_course_get_enrolled_courses_by_timeline_classification', 'core_calendar_get_action_events_by_timesort']);
 const MAX_BYTES = 200 * 1024 * 1024;
 const MAX_MB = Math.round(MAX_BYTES / 1024 / 1024);
 const PAGE_PATHS = /^\/(?:my\/(?:courses\.php)?|course\/(?:view|section)\.php|mod\/(?:resource|folder|page|assign|quiz|forum|url)\/view\.php|pluginfile\.php\/[^?#]+|lib\/ajax\/service\.php)$/;
@@ -33,6 +33,56 @@ async function limitedBody(response, maxBytes) {
     }
   } finally { reader.releaseLock(); }
   return Buffer.concat(chunks);
+}
+
+const BEIJING = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false });
+const beijing = (ts) => (ts ? BEIJING.format(new Date(ts * 1000)) : null);
+
+// 文件名越像课程说明 / 作业说明，越可能写着 DDL。
+const DOC_WORDS = [[/handbook|hand book|module guide|syllabus|outline|手册|大纲/i, 3], [/specification|\bspec\b|brief|requirement|instruction|说明/i, 3],
+  [/assessment|coursework|assignment|project|report|essay|presentation|考核|作业|评估/i, 2], [/schedule|timetable|calendar|deadline|important date|week plan|安排|日程|截止/i, 2]];
+export function docScore(name) { return DOC_WORDS.reduce((sum, [re, w]) => sum + (re.test(name || '') ? w : 0), 0); }
+
+const MONTH = '(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\.?';
+const DATE = new RegExp(`\\b\\d{1,2}(?:st|nd|rd|th)?[\\s/-]+${MONTH}|\\b${MONTH}\\s+\\d{1,2}(?:st|nd|rd|th)?\\b|\\b\\d{4}[-/.]\\d{1,2}[-/.]\\d{1,2}\\b|\\b\\d{1,2}/\\d{1,2}(?:/\\d{2,4})?\\b|\\bweek\\s*\\d{1,2}\\b|\\d{1,2}\\s*月\\s*\\d{1,2}\\s*[日号]|第\\s*\\d{1,2}\\s*周`, 'i');
+const DATES = new RegExp(DATE.source, 'gi');
+// 写明了月份或年份的日期；只有这种日期才往上找表头拼接，避免把「room 1/2」「week 3」之类误当 DDL。
+const STRONG = new RegExp(`\\b\\d{1,2}(?:st|nd|rd|th)?[\\s/-]+${MONTH}|\\b${MONTH}\\s+\\d{1,2}(?:st|nd|rd|th)?\\b|\\b\\d{4}[-/.]\\d{1,2}[-/.]\\d{1,2}\\b|\\b\\d{1,2}/\\d{1,2}/\\d{2,4}\\b|\\d{1,2}\\s*月\\s*\\d{1,2}\\s*[日号]`, 'i');
+const DEADLINE = /due|deadline|submi|hand[- ]?in|important dates?|key dates?|coursework|assignment|assessment|project|report|essay|presentation|quiz|\btest\b|exam|mid-?term|final|\blab\b|截止|提交|考试|测验|作业|报告|展示|重要日期/i;
+const TINY = /^(?:am|pm|a\.m\.|p\.m\.|\(?[a-z]{3,9}day\)?|\d{1,2}[:.]\d{2}(?:\s*[ap]m)?)$/i;
+const clip = (t) => (t.length > 260 ? `${t.slice(0, 257)}…` : t);
+
+// 从课程文件里摘出「日期 / 周次 + 作业、考试等字样」的句子。PDF 表格常被拆成很多短行，
+// 日期行本身不带关键词，所以往上看几行找表头（Important Dates、Due date…），并把后面紧跟的日期、AM/PM 一起拼进来。
+export function deadlineLines(text, max = 25) {
+  const lines = String(text).split(/\n+/).map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  const out = []; const seen = new Set();
+  const push = (t) => { const v = clip(t); if (!seen.has(v)) { seen.add(v); out.push(v); } return out.length >= max; };
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!DATE.test(line)) continue;
+    if (line.length > 300) {
+      // 长段落 / 表格行：每处日期取前后一段，相距很近的合并为一条。
+      let last = -1e9;
+      for (const m of line.matchAll(DATES)) {
+        if (m.index - last < 200) continue;
+        last = m.index;
+        const win = line.slice(Math.max(0, m.index - 140), m.index + 160);
+        if (DEADLINE.test(win) && push((m.index > 140 ? '…' : '') + win)) return out;
+      }
+      continue;
+    }
+    if (DEADLINE.test(line)) { if (push(line)) return out; continue; }
+    if (!STRONG.test(line)) continue;
+    let from = -1;
+    for (let j = i - 1; j >= Math.max(0, i - 6); j--) if (DEADLINE.test(lines[j]) && lines[j].length <= 120) from = j;
+    if (from < 0) continue;
+    let to = i;
+    while (to + 1 < lines.length && to - i < 4 && (DATE.test(lines[to + 1]) || TINY.test(lines[to + 1]))) to++;
+    if (push(lines.slice(from, to + 1).join(' / '))) return out;
+    i = to;
+  }
+  return out;
 }
 
 export class MoodleClient {
@@ -177,6 +227,65 @@ export class MoodleClient {
     return { course_id: String(courseId), course: course.name, items, note: '日期原样保留学校页面的时区；此接口只列出课程页可见的作业和测验。' };
   }
 
+  // Moodle 首页「时间线」同款接口：一次取得所有课程里登记过截止时间的作业、测验等。
+  async upcoming(days = 60) {
+    const key = sessionKey(await this.html('/my/courses.php'));
+    if (!key) throw new Error('无法读取学校会话密钥，请重新登录。');
+    const now = Math.floor(Date.now() / 1000);
+    const events = []; let after = 0; let complete = false;
+    for (let page = 0; page < 5; page++) {
+      const args = { timesortfrom: now - 7 * 86400, timesortto: now + days * 86400, limitnum: 50, ...(after ? { aftereventid: after } : {}) };
+      const r = await this.request(`/lib/ajax/service.php?sesskey=${encodeURIComponent(key)}&info=core_calendar_get_action_events_by_timesort`, {
+        method: 'POST', data: [{ index: 0, methodname: 'core_calendar_get_action_events_by_timesort', args }],
+      });
+      let payload; try { payload = JSON.parse(r.buffer.toString('utf8')); } catch { throw new Error('时间线接口未返回有效 JSON。'); }
+      if (!Array.isArray(payload) || payload[0]?.error) throw new Error('学校未开放时间线接口，请改用 moodle_find_deadlines 逐门课程查找。');
+      const batch = payload[0].data?.events || [];
+      events.push(...batch);
+      if (batch.length < 50) { complete = true; break; }
+      after = batch.at(-1).id;
+    }
+    return {
+      window: `过去 7 天到未来 ${days} 天`, complete, timezone: '北京时间',
+      items: events.map((e) => ({ course: e.course?.fullname || e.course?.shortname || '', course_id: e.course?.id ? String(e.course.id) : null,
+        name: e.activityname || e.name, event: e.name, type: e.modulename, due: beijing(e.timesort), overdue: !!e.overdue,
+        action: e.action?.name || null, url: e.url || e.action?.url || null })),
+      note: '这里只有 Moodle 登记了截止时间的活动。很多课程只把 DDL 写在 Module Handbook、Coursework Specification 等文件里，请再用 moodle_find_deadlines 按课程查找。',
+    };
+  }
+
+  // 按课程找 DDL：课程页上带日期的活动 + handbook / specification 等文件里写着截止日期的句子。
+  async findDeadlines(courseId, { maxDocuments = 4 } = {}) {
+    const course = await this.course(courseId);
+    const activities = course.items.filter((it) => it.dates).map(({ name, type, section, dates, url }) => ({ name, type, section, dates, url }));
+    const candidates = []; const seenUrl = new Set();
+    const consider = (name, entry) => { const score = docScore(name); if (score > 0 && !seenUrl.has(entry.url || entry.page)) { seenUrl.add(entry.url || entry.page); candidates.push({ name, score, ...entry }); } };
+    for (const it of course.items.filter((x) => x.available)) {
+      if (it.type === 'resource') consider(it.name, { url: it.url });
+      else if (it.type === 'page') consider(it.name, { page: it.id });
+    }
+    for (const folder of course.items.filter((x) => x.available && x.type === 'folder').slice(0, 15)) {
+      try { for (const f of (await this.activity(folder.id, 'folder')).files) consider(f.name, { url: f.url, folder: folder.name }); } catch { /* 文件夹读取失败不影响其他 */ }
+    }
+    candidates.sort((a, b) => b.score - a.score);
+    const documents = []; const failed = [];
+    for (const doc of candidates.slice(0, maxDocuments)) {
+      try {
+        let text;
+        if (doc.page) text = (await this.activity(doc.page, 'page')).text;
+        else { const { result, name } = await this.fetchFile(doc.url); text = await extractText(result.buffer, { name, contentType: result.contentType }); }
+        if (text === null) { failed.push({ name: doc.name, error: '此格式暂不支持提取文字。' }); continue; }
+        if (!text.trim()) { failed.push({ name: doc.name, error: '文件没有文本层（扫描件）。' }); continue; }
+        documents.push({ name: doc.name, ...(doc.folder ? { folder: doc.folder } : {}), url: doc.url || null, snippets: deadlineLines(text) });
+      } catch (e) { failed.push({ name: doc.name, error: e.message }); }
+    }
+    return {
+      course_id: String(courseId), course: course.name, activities_with_dates: activities, documents,
+      not_read: candidates.slice(maxDocuments).map((d) => d.name), failed,
+      note: '摘录只包含同时出现日期 / 周次和作业、考试等字样的句子，可能不完整；以学校文件原文为准。只写「第 N 周」的需要对照教学周历换算日期。需要细看时用 moodle_read_file 阅读全文。',
+    };
+  }
+
   async download(url, courseId) {
     const run = () => this.downloadFile(url, courseId);
     const task = this.downloadQueue.then(run, run);
@@ -184,7 +293,8 @@ export class MoodleClient {
     return task;
   }
 
-  async downloadFile(value, courseId) {
+  // 找到资源背后的真实文件并读取内容，不存盘（找 DDL 时只读 handbook 等文件）。
+  async fetchFile(value) {
     let url = allowedUrl(value, this.base);
     if (!/^\/pluginfile\.php\//.test(url.pathname) && !/^\/mod\/resource\/view\.php$/.test(url.pathname)) throw new Error('仅支持课程资源或 pluginfile 文件链接。');
     let result = await this.request(url.href);
@@ -199,6 +309,11 @@ export class MoodleClient {
     const final = new URL(result.url);
     if (!final.pathname.startsWith('/pluginfile.php/')) throw new Error('资源没有返回学校文件地址。');
     const name = safeName(decodeURIComponent(final.pathname.split('/').pop()));
+    return { url, result, name };
+  }
+
+  async downloadFile(value, courseId) {
+    const { url, result, name } = await this.fetchFile(value);
     const sha = crypto.createHash('sha256').update(result.buffer).digest('hex');
     const courseDir = path.join(this.downloads, courseId ? `course-${numericId(courseId)}` : 'unfiled');
     let index = {};
