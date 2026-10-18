@@ -20,8 +20,9 @@ try {
   console.log('西浦课程助手 · 安装\n安装位置：' + installed + '\n不会要求你在这里输入学校密码。\n');
   fs.mkdirSync(installed, { recursive: true, mode: 0o700 });
   if (path.resolve(root) !== path.resolve(installed)) {
-    for (const item of ['bin', 'src', 'web', 'package.json', 'package-lock.json', 'LICENSE', 'README-XJTLU.md']) {
-      fs.cpSync(path.join(root, item), path.join(installed, item), { recursive: true });
+    // npm 发布的包里没有 package-lock.json，而是 npm-shrinkwrap.json；两者都按存在与否复制，npm ci 都能用。
+    for (const item of ['bin', 'src', 'web', 'package.json', 'package-lock.json', 'npm-shrinkwrap.json', 'LICENSE', 'README-XJTLU.md']) {
+      if (fs.existsSync(path.join(root, item))) fs.cpSync(path.join(root, item), path.join(installed, item), { recursive: true });
     }
   }
   run('npm', ['ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'], installed);

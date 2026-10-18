@@ -68,7 +68,7 @@ export function stableInstall(log = () => {}) {
   const root = path.join(DATA_DIR, 'app');
   if (path.resolve(ROOT) === path.resolve(root)) return launchConfig(root);
   fs.mkdirSync(root, { recursive: true, mode: 0o700 });
-  for (const name of ['src', 'bin', 'web', 'package.json', 'package-lock.json', 'LICENSE']) {
+  for (const name of ['src', 'bin', 'web', 'package.json', 'package-lock.json', 'npm-shrinkwrap.json', 'LICENSE']) {
     const source = path.join(ROOT, name);
     if (fs.existsSync(source)) fs.cpSync(source, path.join(root, name), { recursive: true });
   }

@@ -67,12 +67,35 @@
     }
 
     Write-Host '② 正在下载课程助手…'
-    $AppZip = Join-Path $Tmp 'app.zip'
-    if (-not ((Get-File "$Site/xjtlu-core-mcp.zip" $AppZip) -or (Get-File $RepoZip $AppZip))) {
-      throw '课程助手下载失败。请检查网络（或连接校园网 / VPN）后重新运行同一行命令。'
+    # 优先从 npm 下载（国内镜像 npmmirror 在前），按 npm 公布的 sha512 校验；都不行再用 GitHub Pages / 仓库 ZIP。
+    # 脚本写成临时文件再交给 node 运行：Windows PowerShell 5.1 给原生程序传带引号的参数会出错。
+    $NpmFetch = Join-Path $Tmp 'npm-fetch.js'
+    Set-Content -Path $NpmFetch -Encoding ASCII -Value @'
+const [reg, pkg, out] = process.argv.slice(2);
+(async () => {
+  const meta = await (await fetch(`${reg}/${pkg}/latest`, { signal: AbortSignal.timeout(15000) })).json();
+  const res = await fetch(meta.dist.tarball, { signal: AbortSignal.timeout(180000) });
+  if (!res.ok) throw new Error(String(res.status));
+  const buf = Buffer.from(await res.arrayBuffer());
+  const [algo, want] = meta.dist.integrity.split(/-(.*)/s);
+  if (require("crypto").createHash(algo).update(buf).digest("base64") !== want) throw new Error("integrity");
+  require("fs").writeFileSync(out, buf);
+})().catch(() => process.exit(1));
+'@
+    $AppDir = Join-Path $Tmp 'app'; New-Item -ItemType Directory -Force -Path $AppDir | Out-Null
+    $Tgz = Join-Path $Tmp 'app.tgz'; $GotApp = $false
+    foreach ($Reg in @('https://registry.npmmirror.com', 'https://registry.npmjs.org')) {
+      & $Node $NpmFetch $Reg 'xjtlu-core-mcp' $Tgz
+      if ($LASTEXITCODE -eq 0) { & tar.exe -xzf $Tgz -C $AppDir; if ($LASTEXITCODE -eq 0) { $GotApp = $true; break } }
     }
-    Expand-Archive -Force $AppZip (Join-Path $Tmp 'app')
-    $Installer = Get-ChildItem -Path (Join-Path $Tmp 'app') -Recurse -Filter 'install-xjtlu.mjs' | Select-Object -First 1
+    if (-not $GotApp) {
+      $AppZip = Join-Path $Tmp 'app.zip'
+      if (-not ((Get-File "$Site/xjtlu-core-mcp.zip" $AppZip) -or (Get-File $RepoZip $AppZip))) {
+        throw '课程助手下载失败。请检查网络（或连接校园网 / VPN）后重新运行同一行命令。'
+      }
+      Expand-Archive -Force $AppZip $AppDir
+    }
+    $Installer = Get-ChildItem -Path $AppDir -Recurse -Filter 'install-xjtlu.mjs' | Select-Object -First 1
     if (-not $Installer) { throw '下载的文件不完整，请重新运行同一行命令。' }
 
     # npm 官方源连不上时改用国内镜像（依赖版本由锁文件固定，只换下载地址）。

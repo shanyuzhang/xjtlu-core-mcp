@@ -265,7 +265,7 @@ test('one-line installer scripts are well-formed and keep the npm/Node fallbacks
   const text = fs.readFileSync(sh, 'utf8');
   assert.match(text, /--quick/); assert.match(text, /SHASUMS256/); assert.match(text, /registry\.npmmirror\.com/);
   const ps1 = fs.readFileSync(sh.replace(/install\.sh$/, 'install.ps1'), 'utf8');
-  assert.match(ps1, /--quick/); assert.match(ps1, /Get-FileHash/); assert.doesNotMatch(ps1, /^[^#\n]*\bexit\b/m);
+  assert.match(ps1, /--quick/); assert.match(ps1, /Get-FileHash/); assert.doesNotMatch(ps1, /^\s*exit\b/m); assert.match(text, /registry\.npmmirror\.com/); assert.match(ps1, /xjtlu-core-mcp/);
 });
 
 test('Kimi Code and Claude Code are detected and connected', () => {

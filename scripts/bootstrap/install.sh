@@ -64,12 +64,28 @@ if [ "$(uname -s)" = Darwin ]; then
 fi
 
 say "② 正在下载课程助手…"
-if fetch "$SITE/xjtlu-core-mcp.zip" "$TMP/app.zip"; then
-  unzip -q "$TMP/app.zip" -d "$TMP/app"
-elif fetch "$REPO_ZIP" "$TMP/app.zip"; then
-  unzip -q "$TMP/app.zip" -d "$TMP/app"
-else
-  fail "课程助手下载失败。请检查网络（或连接校园网 / VPN）后重新运行同一行命令。"
+# 优先从 npm 下载（国内镜像 npmmirror 在前），按 npm 公布的 sha512 校验；都不行再用 GitHub Pages / 仓库 ZIP。
+NPM_FETCH='const [reg, pkg, out] = process.argv.slice(1);
+(async () => {
+  const meta = await (await fetch(`${reg}/${pkg}/latest`, { signal: AbortSignal.timeout(15000) })).json();
+  const res = await fetch(meta.dist.tarball, { signal: AbortSignal.timeout(180000) });
+  if (!res.ok) throw new Error(String(res.status));
+  const buf = Buffer.from(await res.arrayBuffer());
+  const [algo, want] = meta.dist.integrity.split(/-(.*)/s);
+  if (require("crypto").createHash(algo).update(buf).digest("base64") !== want) throw new Error("integrity");
+  require("fs").writeFileSync(out, buf);
+})().catch(() => process.exit(1));'
+mkdir -p "$TMP/app"
+got_app=""
+for reg in https://registry.npmmirror.com https://registry.npmjs.org; do
+  if "$NODE" -e "$NPM_FETCH" "$reg" xjtlu-core-mcp "$TMP/app.tgz" && tar -xzf "$TMP/app.tgz" -C "$TMP/app"; then got_app=1; break; fi
+done
+if [ -z "$got_app" ]; then
+  if fetch "$SITE/xjtlu-core-mcp.zip" "$TMP/app.zip" || fetch "$REPO_ZIP" "$TMP/app.zip"; then
+    unzip -q "$TMP/app.zip" -d "$TMP/app"
+  else
+    fail "课程助手下载失败。请检查网络（或连接校园网 / VPN）后重新运行同一行命令。"
+  fi
 fi
 INSTALLER="$(find "$TMP/app" -maxdepth 3 -path '*/scripts/install-xjtlu.mjs' | head -n 1)"
 [ -n "$INSTALLER" ] || fail "下载的文件不完整，请重新运行同一行命令。"

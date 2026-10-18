@@ -192,6 +192,8 @@ footer{border-top:1px solid var(--line);background:var(--s0);padding:40px 0 48px
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 
 /* v2 additions */
+.npx-alt{margin-top:16px}
+.npx-alt code{background:var(--s0);border:1px solid var(--line);padding:1px 6px;border-radius:6px;color:var(--ink-2);overflow-wrap:anywhere}
 .gh-btn{display:inline-flex;align-items:center;width:auto;gap:6px;padding:0 10px;text-decoration:none;font-size:12.5px;font-weight:600;color:var(--ink-2)}
 .gh-count{font:500 11.5px/1 var(--mono);color:var(--muted);border-left:1px solid var(--line);padding-left:7px;margin-left:1px;font-variant-numeric:tabular-nums}
 .star-cta{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px 22px;margin-bottom:16px}
@@ -323,6 +325,7 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
               <p data-en="Click “XJTLU Account” and enter your username and password. The window closes by itself once you’re in. At the end it asks which AI app to connect: just press Enter for “yes”.">点「XJTLU Account」，输入账号密码。登录完窗口会自己关闭；最后问你要连接哪个 AI 应用，直接按回车就是「要」。</p>
             </div>
           </div>
+          <p class="fine npx-alt" data-en="Already have Node.js? You can also run &lt;code&gt;npx -y xjtlu-core-mcp@latest setup&lt;/code&gt;">已经装了 Node.js？也可以直接运行 <code>npx -y xjtlu-core-mcp@latest setup</code></p>
         </div>
         <p class="fine" data-en="No Node.js on your computer? No problem, it gets installed for you. Takes about 2–5 minutes.">电脑上没有 Node.js 也没关系，会自动装好。大约需要 2–5 分钟。</p>
       </div>
@@ -429,7 +432,7 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
       </div>
       <div class="faq">
         <details><summary data-en="Can I open this site from mainland China?">在国内能打开这个网址吗？</summary><div data-en="&lt;p&gt;The site is served through Cloudflare and GitHub Pages and opens on most networks. While installing, Node.js and the other downloads switch to mirrors in China automatically if the official sources are slow. If the page or the install command won’t load, try another network (campus Wi-Fi or a phone hotspot).&lt;/p&gt;"><p>网址通过 Cloudflare 和 GitHub Pages 提供，大多数网络能直接打开。安装时用到的 Node.js 和依赖都会在官方源太慢时自动换成国内镜像。如果网页或安装命令打不开，换个网络（校园网、手机热点）再试。</p></div></details>
-        <details><summary data-en="Why isn’t this an npm / npx command?">为什么不是 npm / npx 命令？</summary><div data-en="&lt;p&gt;An npx command needs Node.js to be installed already, and it downloads from GitHub and the official npm registry, which are often slow in China. This one line also works on a computer without Node.js: it installs Node.js for you and switches to a mirror when a download is slow. If you already have Node.js, it uses that.&lt;/p&gt;"><p>npx 命令要求电脑上已经装好 Node.js，而且要从 GitHub 和 npm 官方源下载，国内经常很慢。这一行命令在没有 Node.js 的电脑上也能用：它会自己装好 Node.js，遇到慢的下载源自动换国内镜像。已经装了 Node.js 的同学，它会直接用现有的。</p></div></details>
+        <details><summary data-en="Can I install it with npm / npx?">能用 npm / npx 安装吗？</summary><div data-en="&lt;p&gt;It can be: if you already have Node.js, just run &lt;code&gt;npx -y xjtlu-core-mcp@latest setup&lt;/code&gt;. But many students don’t have Node.js, and then there’s no &lt;code&gt;npx&lt;/code&gt; command at all. That’s why this page leads with the one-line installer: it installs Node.js first, then downloads the assistant from npm’s mirror in China.&lt;/p&gt;"><p>也可以用：已经装了 Node.js 的同学，运行 <code>npx -y xjtlu-core-mcp@latest setup</code> 就行。但很多同学电脑上没有 Node.js，那样连 <code>npx</code> 这个命令都没有，所以网页上主推的是一行安装命令：它会先自己装好 Node.js，再从 npm 的国内镜像下载课程助手。</p></div></details>
         <details><summary data-en="My sign-in expired, or my AI says I need to sign in again">登录过期了，或者 AI 说“需要重新登录”</summary><div data-en="&lt;p&gt;Run the same install line again (or send the same message to your AI again). The sign-in window will pop up again. Node.js won’t be downloaded a second time.&lt;/p&gt;"><p>再运行一次同一行安装命令（或者把上面那段话再发给 AI 一次）就行，会重新弹出登录窗口。Node.js 已经装好的话不会重复下载。</p></div></details>
         <details><summary data-en="It’s installed, but my AI can’t find my modules">装好了，但 AI 里找不到我的课程</summary><div data-en="&lt;p&gt;Fully quit the AI app (on a Mac press &lt;kbd&gt;⌘&lt;/kbd&gt; + &lt;kbd&gt;Q&lt;/kbd&gt;) and open it again. Still nothing? Run the install line again and press Enter when it asks whether to connect your AI app.&lt;/p&gt;"><p>先把 AI 应用<b>完全退出</b>（Mac 上按 <kbd>⌘</kbd> + <kbd>Q</kbd>），再重新打开。还不行的话，再运行一次安装命令，最后问你要不要连接 AI 应用时按回车。</p></div></details>
         <details><summary data-en="It says it couldn’t find any supported AI app">提示“没有找到支持的 AI 应用”</summary><div data-en="&lt;p&gt;Install one of them first (for example Codex, Claude Code or Kimi Code), open it once, then run the install line again.&lt;/p&gt;"><p>先安装其中一个（比如 Codex、Claude Code 或 Kimi Code），打开一次，再运行一次安装命令。</p></div></details>

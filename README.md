@@ -4,6 +4,7 @@
 >
 > macOS：`/bin/bash -c "$(curl -fsSL https://shanyuzhang.com/xjtlu-core-mcp/install.sh)"`
 > Windows PowerShell：`irm https://shanyuzhang.com/xjtlu-core-mcp/install.ps1 | iex`
+> 已装 Node.js 20+：`npx -y xjtlu-core-mcp@latest setup`（npm 包 [xjtlu-core-mcp](https://www.npmjs.com/package/xjtlu-core-mcp)）
 >
 > 本仓库基于 CorCvusRamboChen/canvas-session-mcp（MIT），原 Canvas 功能保留，下文是原项目说明。
 

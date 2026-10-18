@@ -1,25 +1,37 @@
 {
-  "name": "canvas-session-mcp",
-  "version": "0.1.0",
-  "description": "MCP server that connects AI assistants (Claude, Cursor, Codex…) to Canvas LMS using your normal browser login — no access token needed. Read-only.",
+  "name": "xjtlu-core-mcp",
+  "version": "0.2.0",
+  "description": "西浦课程助手：让 Codex、Claude Code 等 AI 读取 XJTLU Learning Mall（Moodle）的课程、DDL 和课件。只读，数据留在本机。Let your AI read your XJTLU Learning Mall modules, deadlines and lecture files.",
   "main": "src/server.js",
+  "bin": {
+    "xjtlu-core-mcp": "bin/xjtlu-cli.js",
+    "xjtlu-session-mcp": "bin/xjtlu-cli.js",
+    "canvas-session-mcp": "bin/cli.js"
+  },
   "scripts": {
     "test": "node --test",
     "xjtlu": "node bin/xjtlu-cli.js",
     "web": "node bin/xjtlu-cli.js web",
-    "package:xjtlu": "node scripts/build-xjtlu-bundle.mjs"
+    "package:xjtlu": "node scripts/build-xjtlu-bundle.mjs",
+    "prepack": "node -e \"require('fs').copyFileSync('package-lock.json','npm-shrinkwrap.json')\"",
+    "postpack": "node -e \"require('fs').rmSync('npm-shrinkwrap.json',{force:true})\""
   },
   "keywords": [
-    "canvas",
-    "canvas-lms",
-    "instructure",
+    "xjtlu",
+    "moodle",
+    "learning-mall",
     "mcp",
     "model-context-protocol",
     "claude",
+    "codex",
+    "kimi",
     "student",
-    "ai"
+    "canvas"
   ],
-  "author": "CorCvusRamboChen",
+  "author": "Shanyu Zhang",
+  "contributors": [
+    "CorCvusRamboChen (canvas-session-mcp)"
+  ],
   "license": "MIT",
   "type": "module",
   "dependencies": {
@@ -32,23 +44,26 @@
     "unpdf": "^1.8.1",
     "zod": "^4.6.5"
   },
-  "bin": {
-    "canvas-session-mcp": "bin/cli.js",
-    "xjtlu-session-mcp": "bin/xjtlu-cli.js"
-  },
   "files": [
     "bin",
     "src",
     "web",
+    "scripts/install-xjtlu.mjs",
+    "scripts/bootstrap",
     "README.md",
-    "LICENSE"
+    "README-XJTLU.md",
+    "LICENSE",
+    "npm-shrinkwrap.json"
   ],
   "engines": {
     "node": ">=20"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/CorCvusRamboChen/canvas-session-mcp.git"
+    "url": "git+https://github.com/shanyuzhang/xjtlu-core-mcp.git"
   },
-  "homepage": "https://corcvusrambochen.github.io/canvas-session-mcp/"
+  "homepage": "https://shanyuzhang.com/xjtlu-core-mcp/",
+  "bugs": {
+    "url": "https://github.com/shanyuzhang/xjtlu-core-mcp/issues"
+  }
 }

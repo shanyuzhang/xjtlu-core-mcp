@@ -9,7 +9,7 @@ import { launchConfig, stableInstall, targets, installTarget } from '../src/mood
 
 const { values, positionals } = parseArgs({ allowPositionals: true, options: {
   url: { type: 'string' }, downloads: { type: 'string' }, port: { type: 'string', default: '3891' },
-  yes: { type: 'boolean' }, 'no-login': { type: 'boolean' }, 'no-install': { type: 'boolean' }, clients: { type: 'string' }, quick: { type: 'boolean' },
+  yes: { type: 'boolean' }, 'no-login': { type: 'boolean' }, 'no-install': { type: 'boolean' }, clients: { type: 'string' }, quick: { type: 'boolean' }, custom: { type: 'boolean' },
   help: { type: 'boolean', short: 'h' },
 } });
 const command = values.help ? 'help' : positionals[0] || 'serve';
@@ -24,6 +24,8 @@ const ask = async (text, fallback = '') => {
 try {
   if (command === 'help') log(`西浦 Learning Mall MCP\n\n  setup         连接学校账号并配置 AI 客户端\n  login         在独立 Chrome / Edge 窗口登录\n  status        检查登录状态\n  serve         启动 MCP（默认，供 AI 客户端调用）\n  web           启动本地管理页面 http://127.0.0.1:3891\n  config        输出手动 MCP 配置\n\n可选 --url https://core-archive25-26.xjtlu.edu.cn --downloads <目录> --port 3891\n数据目录：${DATA_DIR}`);
   else if (command === 'setup') {
+    // 默认快速模式（npx 与一行安装一致）；--custom 才逐项询问学校地址和课件目录。
+    if (!values.custom) values.quick = true;
     if (!process.stdin.isTTY && !values.yes) throw new Error('非交互安装需要 --yes 和明确的 --clients；日常使用请在终端运行 setup。');
     // --quick（一行安装命令使用）：沿用已保存或默认的学校地址和课件目录，不再提问。
     const base = normalizeOrigin(values.url || (values.quick ? settings().base : await ask('学校地址（AY25/26 归档站）', settings().base)));
