@@ -194,6 +194,9 @@ footer{border-top:1px solid var(--line);background:var(--s0);padding:40px 0 48px
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 
 /* v2 additions */
+.after-install{margin:14px 0 0;padding:12px 14px;border-radius:12px;background:var(--clay-lt);border:1px solid var(--clay-line);font-size:13.5px;line-height:1.7;color:var(--ink-2)}
+.after-install strong{color:var(--clay-ink);font-weight:600}
+.after-install a{color:var(--clay-ink);text-underline-offset:3px;white-space:nowrap}
 .npx-alt{margin-top:16px}
 .npx-alt code{background:var(--s0);border:1px solid var(--line);padding:1px 6px;border-radius:6px;color:var(--ink-2);overflow-wrap:anywhere}
 .gh-btn{display:inline-flex;align-items:center;width:auto;gap:6px;padding:0 10px;text-decoration:none;font-size:12.5px;font-weight:600;color:var(--ink-2)}
@@ -248,6 +251,7 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
     <nav aria-label="页面导航" data-aria-en="Page navigation">
       <a href="#demo" data-en="What it does">能做什么</a>
       <a href="#install" data-en="Install">安装</a>
+      <a href="#later" data-en="Long-term use">长期使用</a>
       <a href="#faq" data-en="FAQ">常见问题</a>
       <a class="icon-btn gh-btn" href="https://github.com/shanyuzhang/xjtlu-core-mcp" target="_blank" rel="noreferrer" aria-label="在 GitHub 上查看并 Star" data-aria-en="View and star on GitHub"><svg class="ico"><use href="#i-github"/></svg><span class="gh-text">Star</span><span class="gh-count" data-stars hidden></span></a>
       <button class="icon-btn lang-btn" id="lang" type="button" aria-label="Switch to English / 切换到中文">EN</button>
@@ -331,6 +335,7 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
           <p class="fine npx-alt" data-en="Already have Node.js? You can also run &lt;code&gt;npx -y xjtlu-core-mcp@latest setup&lt;/code&gt;">已经装了 Node.js？也可以直接运行 <code>npx -y xjtlu-core-mcp@latest setup</code></p>
         </div>
         <p class="fine" data-en="No Node.js on your computer? No problem, it gets installed for you. Takes about 2–5 minutes.">电脑上没有 Node.js 也没关系，会自动装好。大约需要 2–5 分钟。</p>
+        <p class="after-install" data-en="&lt;strong&gt;After that:&lt;/strong&gt; you only install once. Next time, just open your AI and say “XJTLU course assistant: what deadlines do I have?”; if you’re signed out, say “sign me in to the XJTLU course assistant”. &lt;a href=&quot;#later&quot;&gt;More here&lt;/a&gt;"><strong>装好以后：</strong>只需装一次。以后打开 AI 直接说「西浦课程助手：我最近有哪些 DDL？」就行；登录过期就说「帮我登录西浦课程助手」。<a href="#later">详细看这里</a></p>
       </div>
     </div>
   </div>
