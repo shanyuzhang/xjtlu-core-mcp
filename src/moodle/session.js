@@ -6,7 +6,7 @@ import { chromium } from 'playwright-core';
 import { STATE_FILE, PROFILE_DIR, secureJson } from './config.js';
 
 export class LoginRequired extends Error {
-  constructor() { super('登录已失效或尚未登录。请在本地页面点击「连接学校账号」，或运行 npm run xjtlu -- login。'); this.code = 'LOGIN_REQUIRED'; }
+  constructor() { super('登录已失效或尚未登录。请对 AI 说「帮我登录西浦课程助手」（会弹出学校登录窗口），或重新运行一次 https://shanyuzhang.com/xjtlu-core-mcp/ 上的安装命令。'); this.code = 'LOGIN_REQUIRED'; }
 }
 
 export class RestrictedActivity extends Error {

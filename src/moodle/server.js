@@ -7,7 +7,7 @@ import { registerMoodleTools } from './tools.js';
 const { version } = JSON.parse(fs.readFileSync(new URL('../../package.json', import.meta.url), 'utf8'));
 
 // AI 客户端连接时读到的使用说明：先问清需求，DDL 要连文件一起查，结果直接在对话里给。
-export const INSTRUCTIONS = `你在帮西交利物浦大学（XJTLU）的学生使用 Learning Mall（Moodle）课程助手，工具只读，不会提交作业、开始测验或发帖。
+export const INSTRUCTIONS = `你在帮西交利物浦大学（XJTLU）的学生使用 Learning Mall（Moodle）课程助手，工具只读，不会提交作业、开始测验或发帖。学生只需安装一次，以后每次打开 AI 应用，这些工具都会自动可用；学生提到“西浦课程助手”“Learning Mall”“DDL”“课件”“讲义”等时，直接使用这些工具，不需要让学生重新安装。
 
 1. 先问清需求。学生说得笼统（例如刚装好、只说“帮我看看课程”），先用一句话问他要做什么：查 DDL / 截止日期、下载课件、阅读或总结某份讲义，还是别的。不要一上来就批量下载。
 
@@ -17,7 +17,7 @@ export const INSTRUCTIONS = `你在帮西交利物浦大学（XJTLU）的学生�
 
 4. 输出：结果直接在对话里用简洁的列表或表格给出，不要生成 Excel 或其他文件。最后可以顺带问一句是否需要整理成 HTML 页面，学生同意后再做。
 
-5. 遇到“需要登录”的错误，请学生重新运行一次 https://shanyuzhang.com/xjtlu-core-mcp/ 上的安装命令，在弹出的窗口登录后再试。遇到“受限”的活动，说明那是学校设置的访问条件，不要尝试绕过。`;
+5. 遇到“需要登录”的错误，或学生说“帮我登录西浦课程助手”：调用 moodle_login，它会在学生电脑上弹出学校登录窗口并立即返回。告诉学生在窗口里点 XJTLU Account 自己登录，完成后窗口会自动关闭，再继续刚才的事（可以先用 moodle_whoami 确认已登录）。绝不要向学生索要密码。遇到“受限”的活动，说明那是学校设置的访问条件，不要尝试绕过。`;
 
 export async function startMoodleServer() {
   const server = new McpServer({ name: 'xjtlu-session-mcp', version }, { instructions: INSTRUCTIONS });

@@ -8,7 +8,9 @@ const saveDir = z.string().min(1).max(500).optional().describe('保存到哪个�
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 export const MOODLE_TOOLS = [
-  { name: 'moodle_whoami', description: '检查西浦 Learning Mall / Moodle 的登录状态。', input: {}, run: (c) => c.status() },
+  { name: 'moodle_whoami', description: '检查西浦 Learning Mall / Moodle 的登录状态；登录窗口开着时返回登录进度。', input: {}, run: (c) => c.loginState() },
+  { name: 'moodle_login', localWrite: true, description: '学生需要登录或登录已过期时调用：在学生电脑上弹出学校登录窗口（普通 Chrome / Edge）后立即返回。学生在窗口里自己输入账号密码，完成后窗口自动关闭；之后可用 moodle_whoami 确认。已登录时直接返回已登录。绝不要向学生索要密码。',
+    input: {}, run: (c) => c.startLogin() },
   { name: 'moodle_list_courses', description: '列出自己的 Moodle 课程，包括归档课程。visible_only 只列出首页可见课程，结果会明确说明完整性。',
     input: { visible_only: z.boolean().optional() }, run: (c, a) => a.visible_only ? c.visibleCourses() : c.courses() },
   { name: 'moodle_get_course', description: '读取课程分区、周次及资料/作业链接。受限内容仅标记，不尝试访问。', input: { course_id: id }, run: (c, a) => c.course(a.course_id) },

@@ -157,6 +157,8 @@ export class MoodleClient {
   }
 
   async expired(value, options) {
+    // 登录窗口已经开着时不要再等它（可能要好几分钟），直接提示需要登录。
+    if (this.session.pending) throw new LoginRequired();
     if (options.renew && this.session.login) {
       try { await this.session.login({ headless: true }); }
       catch { throw new LoginRequired(); }
@@ -166,6 +168,28 @@ export class MoodleClient {
   }
 
   async html(url) { const r = await this.request(url); if (!r.contentType.includes('html')) throw new Error('预期课程页面，但收到其他文件类型。'); return r.buffer.toString('utf8'); }
+
+  // 在对话里登录：后台打开普通 Chrome / Edge 登录窗口后立即返回，学生在窗口里自己登录。
+  async startLogin() {
+    if (!this.session.pending) {
+      try { const me = await this.status(); return { connected: true, name: me.name, site: this.base, message: '已经登录，不需要重新登录。' }; }
+      catch (e) { if (e.code !== 'LOGIN_REQUIRED') throw e; }
+      if (!this.session.pending) this.session.login().catch(() => {});
+    }
+    return { connected: false, login_window_opened: true, site: this.base, stage: this.session.loginStatus,
+      message: '已在这台电脑上打开学校登录窗口（Chrome / Edge）。请在窗口里点「XJTLU Account」，用自己的学校账号登录；回到 Learning Mall 后窗口会自动关闭，然后再继续提问。登录期间请不要关闭 AI 应用。' };
+  }
+
+  // 登录状态；登录窗口开着时返回当前进度，而不是直接报错。
+  async loginState() {
+    try { return await this.status(); }
+    catch (e) {
+      if (e.code !== 'LOGIN_REQUIRED') throw e;
+      if (this.session.pending) return { connected: false, login_in_progress: true, stage: this.session.loginStatus, site: this.base };
+      if (this.session.lastLoginError) { const err = new LoginRequired(); err.message += `（上次登录未完成：${this.session.lastLoginError}）`; throw err; }
+      throw e;
+    }
+  }
 
   async status() {
     const html = await this.html('/my/');

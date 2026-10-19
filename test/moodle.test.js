@@ -225,6 +225,27 @@ test('files can be saved into a folder the student chooses, but only inside thei
   fs.rmSync(userHome, { recursive: true, force: true });
 });
 
+test('signing in from the chat opens one login window, reports progress, and never blocks other tools', async () => {
+  let opened = 0; const never = new Promise(() => {});
+  const waiting = { cookieHeader: () => '', pending: null, loginStatus: null, lastLoginError: null,
+    login() { opened++; this.pending = never; this.loginStatus = '学校认证表单已显示，请在此专用窗口输入账号密码。'; return never; } };
+  const c = new MoodleClient({ base, session: waiting, downloads: path.join(home, 'downloads'), dataDir: home });
+  const first = await c.startLogin();
+  assert.equal(first.login_window_opened, true); assert.equal(opened, 1); assert.match(first.message, /XJTLU Account/);
+  await c.startLogin(); assert.equal(opened, 1);
+  const state = await c.loginState(); assert.equal(state.login_in_progress, true); assert.match(state.stage, /认证表单/);
+
+  // 登录窗口开着时，会话过期的请求立即返回「需要登录」，不等待登录窗口。
+  const stale = { cookieHeader: () => 'MoodleSession=stale', pending: never, login() { throw new Error('should not wait for the window'); } };
+  const t = Date.now();
+  await assert.rejects(new MoodleClient({ base, session: stale, downloads: path.join(home, 'downloads'), dataDir: home }).status(), (e) => e.code === 'LOGIN_REQUIRED' && /帮我登录西浦课程助手/.test(e.message));
+  assert.ok(Date.now() - t < 5000);
+
+  let calls = 0; const signedIn = { cookieHeader: () => 'MoodleSession=good', pending: null, login() { calls++; } };
+  const ok = await new MoodleClient({ base, session: signedIn, downloads: path.join(home, 'downloads'), dataDir: home }).startLogin();
+  assert.equal(ok.connected, true); assert.equal(ok.name, 'Test Student'); assert.equal(calls, 0);
+});
+
 test('same-name different content is not overwritten', async () => {
   const c = make(); c.fetch = async () => new Response('A different lecture', { headers: { 'Content-Type': 'text/plain' } });
   const prior = await make().readFile(`${base}/pluginfile.php/2/notes.txt`, '1');
@@ -361,7 +382,8 @@ test('real stdio MCP advertises tools and reports missing login without starting
   const mcp = new Client({ name: 'xjtlu-test', version: '1' });
   await mcp.connect(new StdioClientTransport({ command: process.execPath, args: [cli, 'serve'], env: { ...process.env, XJTLU_MCP_HOME: path.join(home, 'empty'), XJTLU_URL: 'https://core-archive25-26.xjtlu.edu.cn' } }));
   try {
-    const { tools } = await mcp.listTools(); assert.equal(tools.length, 11);
+    const { tools } = await mcp.listTools(); assert.equal(tools.length, 12);
+    assert.equal(tools.find((t) => t.name === 'moodle_login').annotations.readOnlyHint, false); assert.match(mcp.getInstructions(), /moodle_login/);
     assert.match(mcp.getInstructions(), /先问清需求/); assert.match(mcp.getInstructions(), /moodle_find_deadlines/); assert.match(mcp.getInstructions(), /不要生成 Excel/);
     assert.match(mcp.getInstructions(), /save_dir/);
     for (const name of ['moodle_read_file', 'moodle_save_course_files']) assert.ok(tools.find((t) => t.name === name).inputSchema.properties.save_dir);
