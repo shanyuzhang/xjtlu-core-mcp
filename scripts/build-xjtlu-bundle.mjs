@@ -54,6 +54,8 @@ const out = {
   'xjtlu-core-mcp.zip': zip, 'SHA256SUMS.txt': `${sha}  xjtlu-core-mcp.zip\n`, '.nojekyll': '',
 };
 for (const [name, value] of Object.entries(out)) fs.writeFileSync(path.join(siteDir, name), value);
+// 网站图标（PNG / ICO），引用地址见 docs/xjtlu-guide.template.html 的 <link rel="icon">。
+fs.cpSync(path.join(root, 'docs/icons'), path.join(siteDir, 'icons'), { recursive: true });
 fs.writeFileSync(path.join(dist, 'xjtlu-core-mcp.zip'), zip);
 fs.writeFileSync(path.join(dist, 'xjtlu-core-guide.html'), html);
 fs.writeFileSync(path.join(dist, 'SHA256SUMS.txt'), `${sha}  xjtlu-core-mcp.zip\n`);
