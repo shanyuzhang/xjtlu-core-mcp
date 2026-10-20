@@ -39,7 +39,10 @@ const zip = Buffer.concat([...local, directory, end]);
 const sha = crypto.createHash('sha256').update(zip).digest('hex');
 const site = (process.env.XJTLU_SITE || 'https://shanyuzhang.com/xjtlu-core-mcp').replace(/\/$/, '');
 const template = fs.readFileSync(path.join(root, 'docs/xjtlu-guide.template.html'), 'utf8');
-const html = template.replaceAll('__SITE__', site).replaceAll('__BUNDLE_SHA256__', sha).replaceAll('__FILE_COUNT__', String(files.length)).replaceAll('__BUILD_DATE__', new Date().toISOString().slice(0, 10));
+const buildDate = new Date().toISOString().slice(0, 10);
+// 宣传片和封面放在站点的 media/ 下；单独发送的 xjtlu-core-guide.html 没有这个目录，改用站点上的绝对地址。
+const render = (media) => template.replaceAll('__SITE__', site).replaceAll('__MEDIA__', media).replaceAll('__BUNDLE_SHA256__', sha).replaceAll('__FILE_COUNT__', String(files.length)).replaceAll('__BUILD_DATE__', buildDate);
+const html = render('media');
 // Windows PowerShell 5.1 的 irm 在服务器未声明 charset 时按 Latin-1 解码，中文会乱码。
 // 所以发布的 install.ps1 只含 ASCII：可读源码以 UTF-8 Base64 内嵌，运行时解码执行。
 const ps1 = fs.readFileSync(path.join(root, 'scripts/bootstrap/install.ps1'));
@@ -56,7 +59,8 @@ const out = {
 for (const [name, value] of Object.entries(out)) fs.writeFileSync(path.join(siteDir, name), value);
 // 网站图标（PNG / ICO），引用地址见 docs/xjtlu-guide.template.html 的 <link rel="icon">。
 fs.cpSync(path.join(root, 'docs/icons'), path.join(siteDir, 'icons'), { recursive: true });
+fs.cpSync(path.join(root, 'docs/xjtlu-guide-media'), path.join(siteDir, 'media'), { recursive: true });
 fs.writeFileSync(path.join(dist, 'xjtlu-core-mcp.zip'), zip);
-fs.writeFileSync(path.join(dist, 'xjtlu-core-guide.html'), html);
+fs.writeFileSync(path.join(dist, 'xjtlu-core-guide.html'), render(`${site}/media`));
 fs.writeFileSync(path.join(dist, 'SHA256SUMS.txt'), `${sha}  xjtlu-core-mcp.zip\n`);
 console.log(`已生成 ${files.length} 个文件的工具包、学生指南和一行安装脚本：\n${dist}/xjtlu-core-guide.html\n${siteDir}/（GitHub Pages：${site}）\nSHA-256: ${sha}`);

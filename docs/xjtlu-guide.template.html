@@ -227,6 +227,32 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
 .need p,.safe-item p{margin:0;font-size:14px;color:var(--muted)}
 .need a,.faq a{color:var(--clay-ink);text-underline-offset:3px}
 @media (max-width:900px){.needs,.safe,.later{grid-template-columns:1fr}}
+
+/* promo video in a phone frame */
+.promo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.8fr);gap:56px;align-items:center}
+.promo .sec-head{margin:0}
+.promo .btn-primary{width:auto;margin-top:26px}
+.promo-stage{position:relative;isolation:isolate;display:grid;place-items:center}
+.promo-stage::before{content:"";position:absolute;inset:6% -12%;z-index:-1;background:radial-gradient(closest-side,var(--clay-lt),transparent)}
+.phone{--rim-hi:var(--s2);--rim-lo:color-mix(in srgb,var(--line-2) 78%,var(--ink));--rim-edge:rgb(32 32 30/.14);
+  --phone-shadow:0 2px 4px rgb(32 32 30/.06),0 30px 60px -20px rgb(32 32 30/.32);
+  position:relative;width:min(100%,300px);padding:4px;border-radius:52px;
+  background:linear-gradient(150deg,var(--rim-hi),var(--line-2) 42%,var(--rim-lo));box-shadow:inset 0 0 0 1px var(--rim-edge),var(--phone-shadow)}
+.phone::before,.phone::after{content:"";position:absolute;width:3px}
+.phone::before{left:-3px;top:108px;height:142px;border-radius:2px 0 0 2px;background:linear-gradient(var(--rim-lo) 0 24px,transparent 24px 44px,var(--rim-lo) 44px 92px,transparent 92px 102px,var(--rim-lo) 102px)}
+.phone::after{right:-3px;top:160px;height:76px;border-radius:0 2px 2px 0;background:var(--rim-lo)}
+.phone-screen{position:relative;padding:9px;border-radius:48px;background:#0b0b0b;box-shadow:inset 0 0 0 1px rgb(255 255 255/.06)}
+.phone video{display:block;width:100%;height:auto;aspect-ratio:9/16;object-fit:cover;border-radius:39px;background:#151515}
+.phone-island{position:absolute;top:18px;left:50%;width:31%;height:26px;transform:translateX(-50%);border-radius:999px;background:#000;pointer-events:none}
+.phone-island::after{content:"";position:absolute;right:9px;top:50%;width:9px;height:9px;margin-top:-4.5px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#2b3550 0 22%,#0d1018 62%)}
+.promo-sound{position:absolute;right:20px;bottom:22px;display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;
+  border:1px solid rgb(255 255 255/.18);background:rgb(21 21 21/.72);color:#f2f1ed;font:500 12.5px/1 var(--sans);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:border-color .15s}
+.promo-sound:hover{border-color:var(--clay)}
+.promo-sound[hidden],.promo-sound:not(.is-on) .on,.promo-sound.is-on .off{display:none}
+:root[data-theme="dark"] .phone{--rim-hi:var(--faint);--rim-lo:color-mix(in srgb,var(--line-2) 60%,var(--s0));--rim-edge:rgb(255 255 255/.08);--phone-shadow:0 2px 4px rgb(0 0 0/.3),0 30px 60px -16px rgb(0 0 0/.6)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .phone{--rim-hi:var(--faint);--rim-lo:color-mix(in srgb,var(--line-2) 60%,var(--s0));--rim-edge:rgb(255 255 255/.08);--phone-shadow:0 2px 4px rgb(0 0 0/.3),0 30px 60px -16px rgb(0 0 0/.6)}}
+@media (max-width:900px){.promo{grid-template-columns:1fr;gap:36px}.phone{width:min(100%,280px)}}
 </style>
 </head>
 <body>
@@ -243,6 +269,8 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
   <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
   <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-sound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></symbol>
 </svg>
 
 <header class="top" id="top">
@@ -339,6 +367,28 @@ kbd{font:500 12px/1 var(--mono);background:var(--s0);border:1px solid var(--line
       </div>
     </div>
   </div>
+
+  <hr class="rule">
+
+  <section id="promo" aria-labelledby="promo-title">
+    <div class="wrap promo">
+      <div class="sec-head">
+        <p class="eyebrow" data-en="30-second tour">30 秒看懂</p>
+        <h2 id="promo-title" data-en="Your AI, reading Learning Mall">你的 AI，<span class="nb">直接读 Learning Mall</span></h2>
+        <p data-en="Ask for deadlines and it lists them in order, flagging dates that don’t match between Moodle and the handbook. Ask for a module’s slides and it saves the whole folder.">问一句 DDL，它按时间排好，Moodle 和 Handbook 对不上的也标出来；说一句「存课件」，整门课的资料就进了文件夹。</p>
+        <a class="btn btn-primary" href="#install" data-en="Install it">去安装</a>
+      </div>
+      <div class="promo-stage">
+        <div class="phone">
+          <div class="phone-screen">
+            <video id="promo-video" muted loop playsinline preload="none" width="720" height="1280" data-src="__MEDIA__/promo-zh.mp4" data-src-en="__MEDIA__/promo-en.mp4" data-poster="__MEDIA__/promo-poster-zh.jpg" data-poster-en="__MEDIA__/promo-poster-en.jpg" aria-label="西浦课程助手 30 秒演示视频" data-aria-en="30-second demo of the XJTLU Course Assistant"></video>
+            <span class="phone-island" aria-hidden="true"></span>
+            <button class="promo-sound" id="promo-sound" type="button"><svg class="ico off"><use href="#i-sound"/></svg><span class="off" data-en="Sound on">打开声音</span><svg class="ico on"><use href="#i-mute"/></svg><span class="on" data-en="Mute">静音</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <hr class="rule">
 
@@ -602,6 +652,43 @@ ${AGENT_COMMANDS[os]}
   document.querySelectorAll('[data-prompt]').forEach((b) => b.addEventListener('click', async () => {
     if (await copy(b.dataset.prompt)) toast(t('已复制，粘贴到你的 AI 应用里。', 'Copied. Paste it into your AI app.'));
   }));
+
+  // 宣传片：滚到看得见才开始下载，静音循环播放（浏览器只允许静音自动播放），离开就暂停，点画面暂停/继续。
+  // 中英文各一版视频和封面，跟着页面语言换。系统要求减少动态效果或开了省流量时不自动播放，改用原生播放控件。
+  const video = document.getElementById('promo-video'); const sound = document.getElementById('promo-sound');
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData === true || !('IntersectionObserver' in window);
+  const promoFile = (key) => video.dataset[lang === 'en' ? `${key}En` : key];
+  let started = still; let inView = false; let userPaused = false;
+  const start = () => { if (!started) { started = true; video.preload = 'auto'; video.src = promoFile('src'); } };
+  const promoLang = () => {
+    video.poster = promoFile('poster');
+    if (!started || video.getAttribute('src') === promoFile('src')) return;
+    // 已经滚走了就先卸掉，滚回来再按新语言下载，免得切语言时白下一个视频。
+    if (!inView && !still) { started = false; video.removeAttribute('src'); video.load(); return; }
+    // 两版时间轴一样：换源后回到同一秒，原来在播就接着播，静音设置不变。
+    const time = video.currentTime; const playing = !video.paused;
+    video.src = promoFile('src');
+    video.addEventListener('loadedmetadata', () => { video.currentTime = time; }, { once: true });
+    if (playing) video.play().catch(() => {});
+  };
+  if (still) { video.controls = true; video.muted = false; sound.hidden = true; video.src = promoFile('src'); }
+  else {
+    new IntersectionObserver(([e]) => {
+      inView = e.isIntersecting;
+      if (!inView) { video.pause(); return; }
+      start(); if (!userPaused) video.play().catch(() => {});
+    }, { threshold: 0.35 }).observe(video);
+    video.addEventListener('click', () => {
+      start(); userPaused = !video.paused;
+      if (userPaused) video.pause(); else video.play().catch(() => {});
+    });
+  }
+  promoLang();
+  document.getElementById('lang').addEventListener('click', promoLang);
+  sound.addEventListener('click', () => {
+    start(); video.muted = !video.muted; sound.classList.toggle('is-on', !video.muted);
+    if (!video.muted) { userPaused = false; video.currentTime = 0; video.play().catch(() => {}); }
+  });
 })();
 </script>
 </body>
